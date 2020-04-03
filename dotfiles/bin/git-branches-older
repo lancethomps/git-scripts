@@ -38,7 +38,7 @@ if test -n "$older_branches"; then
   older_branches="${older_branches::-1}"
 fi
 
-if ! test "$OLDER_ONLY" = 'true'; then
+if ! test "${OLDER_ONLY-}" = 'true'; then
   echo "NEWER..."
   echo "$newer_branches"
 

@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
-if test -n "${DOTFILES-}" || ! test -d "${DOTFILES-}"; then DOTFILES="${HOME}/.dotfiles"; fi
-# shellcheck source=.dotfiles/lib/common.sh disable=SC2016
-if test -e "${DOTFILES}/lib/common.sh"; then source "${DOTFILES}/lib/common.sh"; else echo '"${DOTFILES}/lib/common.sh" does not exist - resolved to: '"${DOTFILES}/lib/common.sh" && exit 1; fi
-set -o errexit -o errtrace
+shopt -s expand_aliases
+set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
+source "$_SCRIPT_DIR/.git_scripts_common_copy.sh"
 
 function export_if_missing() {
   if test -z "${1:-}"; then

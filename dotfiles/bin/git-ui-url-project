@@ -5,12 +5,9 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-git branches-older "$@"
+git_url="$(git remote -v | head -1 | awk '{ print $2 }')"
+scm_domain="$(echo "$git_url" | pcregrep -o3 "$GIT_URL_REGEX")"
+scm_project="$(echo "$git_url" | pcregrep -o6 "$GIT_URL_REGEX")"
+git_repo_name="$(echo "$git_url" | pcregrep -o7 "$GIT_URL_REGEX")"
 
-if confirm_with_auto 'Delete remote branches?'; then
-  git_push_args='--delete'
-  if check_debug; then
-    git_push_args="${git_push_args} -n"
-  fi
-  OLDER_ONLY=true git branches-older "$@" | awk -F $'\t' '{ print $4 }' | sed "s/origin\///" | xargs -n 1 git push ${git_push_args} origin
-fi
+echo "$scm_project"

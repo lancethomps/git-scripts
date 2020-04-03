@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+last_build_url="$(git jenkins-last-build)"
+jenkins_poll_build "$last_build_url" "$@"

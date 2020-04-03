@@ -5,12 +5,14 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-git branches-older "$@"
+DEFAULT_GIT_CURRENT_BRANCH="$(git current-branch-or-commit)"
+GIT_CURRENT_BRANCH="${GIT_CURRENT_BRANCH:-$DEFAULT_GIT_CURRENT_BRANCH}"
+GIT_BRANCH="$1"
+shift
+GIT_MERGE_BASE="$(git merge-base "${GIT_CURRENT_BRANCH}" "${GIT_BRANCH}")"
 
-if confirm_with_auto 'Delete remote branches?'; then
-  git_push_args='--delete'
-  if check_debug; then
-    git_push_args="${git_push_args} -n"
-  fi
-  OLDER_ONLY=true git branches-older "$@" | awk -F $'\t' '{ print $4 }' | sed "s/origin\///" | xargs -n 1 git push ${git_push_args} origin
+if check_debug; then
+  echo git diff "$@" "${GIT_MERGE_BASE}" "${GIT_CURRENT_BRANCH}"
+else
+  git diff "$@" "${GIT_MERGE_BASE}" "${GIT_CURRENT_BRANCH}"
 fi

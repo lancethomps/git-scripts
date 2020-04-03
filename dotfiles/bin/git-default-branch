@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+if ! default_branch_full="$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null)"; then
+  echo "master"
+  exit 0
+fi
+
+echo "${default_branch_full/refs\/remotes\/origin\//}"

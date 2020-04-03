@@ -5,12 +5,13 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-git branches-older "$@"
+git merged-branches-bitbucket-older "$@"
 
 if confirm_with_auto 'Delete remote branches?'; then
   git_push_args='--delete'
   if check_debug; then
     git_push_args="${git_push_args} -n"
   fi
-  OLDER_ONLY=true git branches-older "$@" | awk -F $'\t' '{ print $4 }' | sed "s/origin\///" | xargs -n 1 git push ${git_push_args} origin
+  # shellcheck disable=SC2086
+  OLDER_ONLY=true git merged-branches-bitbucket-older "$@" | awk -F $'\t' '{ print $4 }' | sed "s/origin\///" | xargs -n 1 git push ${git_push_args} origin
 fi

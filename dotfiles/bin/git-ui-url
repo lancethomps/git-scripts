@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck disable=SC1090
+if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
+##################################################################################################################################################
+
+git_url="$(git remote -v | head -1 | awk '{ print $2 }')"
+scm_domain="$(echo "$git_url" | pcregrep -o3 "$GIT_URL_REGEX")"
+git_current_branch="$(git current-branch)"
+
+git_cwd="$(git rev-parse --show-prefix)"
+if test -n "${git_cwd-}"; then
+  git_cwd="${git_cwd::-1}"
+fi
+
+if test -n "${1-}"; then
+  git_path="$1"
+  git_repo_root="$(git rev-parse --show-toplevel)"
+  if ! test -e "${git_repo_root}/${git_path}" && test -e "${git_repo_root}/${git_cwd}/${git_path}"; then
+    git_path="${git_cwd}/${git_path}"
+  fi
+else
+  git_path="${git_cwd}"
+fi
+git_line="${2-}"
+
+function github_url() {
+  suffix=''
+  if test -n "${git_path-}"; then
+    if test -f "$git_path"; then
+      suffix="${suffix}/blob"
+    else
+      suffix="${suffix}/tree"
+    fi
+    suffix="${suffix}/${git_current_branch}/${git_path}"
+  elif test "$git_current_branch" != master; then
+    suffix="${suffix}/tree/${git_current_branch}"
+  fi
+  if test -n "${git_line-}"; then
+    suffix="${suffix}#L${git_line}"
+  fi
+  echo "${browse_url_root}${suffix}"
+}
+
+function bitbucket_url() {
+  suffix=''
+  if test -n "${git_path-}"; then
+    suffix="${suffix}/${git_path}"
+  fi
+  if test "$git_current_branch" != master; then
+    suffix="${suffix}?at=refs/heads/${git_current_branch}"
+  fi
+  if test -n "${git_line-}"; then
+    suffix="${suffix}#${git_line}"
+  fi
+  echo "${browse_url_root}/browse${suffix}"
+}
+
+browse_url_root="$(git ui-url-root)"
+if test "$scm_domain" = 'github.com'; then
+  browse_url="$(github_url)"
+else
+  browse_url="$(bitbucket_url)"
+fi
+
+echo "$browse_url"

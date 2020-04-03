@@ -5,12 +5,20 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-git branches-older "$@"
-
-if confirm_with_auto 'Delete remote branches?'; then
-  git_push_args='--delete'
-  if check_debug; then
-    git_push_args="${git_push_args} -n"
-  fi
-  OLDER_ONLY=true git branches-older "$@" | awk -F $'\t' '{ print $4 }' | sed "s/origin\///" | xargs -n 1 git push ${git_push_args} origin
+if test -z "$1"; then
+  echo "The first argument must be a date in absolute or relative format."
+  exit 1
 fi
+
+if ! bb_merged_branches_regex="$(git merged-branches-bitbucket-regex)" || test -z "$bb_merged_branches_regex"; then
+  echo "No Bitbucket MERGED branches found"
+  exit 1
+fi
+
+bb_merged_branches_regex='('"${bb_merged_branches_regex}"'|^NEWER|^OLDER|^$)'
+
+if check_verbose; then
+  echo "bb_merged_branches_regex -> $bb_merged_branches_regex"
+fi
+
+git branches-older "$@" "${GIT_BRANCH_TARGET}" | grep -E "$bb_merged_branches_regex"

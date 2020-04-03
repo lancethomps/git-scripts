@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck disable=SC1090
+if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+function usage() {
+  cat << EOF
+usage: git copy-modified-files [--from] <copy_to_or_from_dir>
+EOF
+}
+
+if test "${1:-}" = "--from"; then
+  DIRECTION="incoming"
+  shift
+else
+  DIRECTION="outgoing"
+fi
+
+COPY_DIR="${1:-}"
+
+if test -z "${COPY_DIR:-}"; then
+  usage
+  exit 1
+elif ! test -e "${COPY_DIR}"; then
+  echo "Directory to copy to does not exist: ${COPY_DIR}"
+  exit 1
+fi
+
+COPY_DIR="$(realpath "$COPY_DIR")"
+DEST_DIR="${COPY_DIR}/"
+SOURCE_DIR=""
+MODIFIED_FILES_CMD=()
+if test "$DIRECTION" = "incoming"; then
+  DEST_DIR=""
+  SOURCE_DIR="${COPY_DIR}/"
+  MODIFIED_FILES_CMD+=(-C "$COPY_DIR")
+fi
+MODIFIED_FILES_CMD+=(ls-files --others --exclude-standard --modified)
+MODIFIED_FILES=($(git "${MODIFIED_FILES_CMD[@]}" | sort))
+FIRST_PAD="$(longest_line_length "${MODIFIED_FILES[@]}")"
+if test "$DIRECTION" = "incoming"; then
+  FIRST_PAD=$((FIRST_PAD + ${#SOURCE_DIR}))
+fi
+PRINT_FORMAT="%-${FIRST_PAD}s -> %s"$'\n'
+
+for file in "${MODIFIED_FILES[@]}"; do
+  source_file="${SOURCE_DIR}${file}"
+  dest_file="${DEST_DIR}${file}"
+  dest_dir="$(dirname "$dest_file")"
+  printf "$PRINT_FORMAT" "$source_file" "$dest_file"
+
+  if check_debug; then
+    echo '[DEBUG]' cp -f "$source_file" "$dest_file"
+  else
+    if ! test -e "$dest_dir"; then
+      mkdir -pv "$dest_dir"
+    fi
+    cp -f "$source_file" "$dest_file"
+  fi
+done

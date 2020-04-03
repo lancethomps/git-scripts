@@ -5,12 +5,29 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-git branches-older "$@"
+CURRENT_BRANCH_NAME="$(git current-branch)"
+BRANCH_NAME="${1:-$CURRENT_BRANCH_NAME}"
 
-if confirm_with_auto 'Delete remote branches?'; then
-  git_push_args='--delete'
-  if check_debug; then
-    git_push_args="${git_push_args} -n"
+if echo " ${BRANCH_NAME}" | pcregrep --quiet "$GIT_BRANCH_SKIP_REGEX"; then
+  echo "Cannot delete branch '${BRANCH_NAME}' because it matched the GIT_BRANCH_SKIP_REGEX: ${GIT_BRANCH_SKIP_REGEX}"
+  exit 1
+fi
+
+if test -z "${1:-}" && ! confirm_with_auto "Delete local and remote branch '${BRANCH_NAME}'?"; then
+  exit 1
+fi
+
+git push --delete origin "${BRANCH_NAME}"
+
+if test "$CURRENT_BRANCH_NAME" = "${BRANCH_NAME}"; then
+  git checkout master
+fi
+
+if ! git branch -d "${BRANCH_NAME}"; then
+  if ! confirm_with_auto "Force delete local branch '${BRANCH_NAME}'?"; then
+    exit 1
   fi
-  OLDER_ONLY=true git branches-older "$@" | awk -F $'\t' '{ print $4 }' | sed "s/origin\///" | xargs -n 1 git push ${git_push_args} origin
+  git branch -D "${BRANCH_NAME}"
+else
+  exit 0
 fi

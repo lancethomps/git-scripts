@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+if test -z "${PR_TO_REF:-}"; then
+  if test -n "${1:-}" && [[ "$1" != '-'* ]]; then
+    PR_TO_REF="$1"
+    shift
+  else
+    PR_TO_REF="origin/master"
+  fi
+fi
+git_current_branch="$(git current-branch)"
+
+git log --left-right --cherry-pick --no-merges --reverse --format='* %s%n%w(100000,2,2)%-b' "$@" "${git_current_branch}...${PR_TO_REF}"

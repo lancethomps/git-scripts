@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck disable=SC1090
+if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+if test -z "${_GREP_ARGS-}"; then
+  _GREP_ARGS=()
+fi
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  cat << EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--help] [--debug] [--verbose] [--use-case] <grep_args>...
+
+EXAMPLES
+       ${_SCRIPT_NAME} \"search for string\"
+       ${_SCRIPT_NAME} --use-case xyz
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      shift
+      export debug_mode=true
+      ;;
+    --verbose)
+      shift
+      export verbose=true
+      ;;
+    --use-case)
+      shift
+      use_case=true
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if test -z "${1:-}"; then
+  _usage "$@"
+  exit 1
+fi
+##################################################################################################################################################
+
+if check_not_true "${use_case-}" && ! [[ ${*: -1} =~ [A-Z] ]]; then
+  _GREP_ARGS+=(-i)
+fi
+
+USE_BAT_IF_AVAILABLE="${USE_BAT_IF_AVAILABLE:-false}"
+
+function create_fzf_args() {
+  local preview_grep_args
+  preview_grep_args="$(get_args_quoted "${_GREP_ARGS[@]}")"
+  get_terminal_sep
+
+  if check_true "$USE_BAT_IF_AVAILABLE" && command -v bat > /dev/null 2>&1; then
+    PREVIEW_FILE_COMMAND="bat --color=always --paging=always --style=numbers --pager \"less --pattern=${1}\" \"\$filename\""
+  else
+    PREVIEW_FILE_COMMAND="git grep -h -C 20 $preview_grep_args -- \"\$filename\""
+    # PREVIEW_FILE_COMMAND="${PREVIEW_FILE_COMMAND} | bat --color=always --language=\$fileext"
+  fi
+
+  _FZF_ARGS=()
+  if test -n "${FZF_ARGS-}"; then
+    # shellcheck disable=SC2206
+    _FZF_ARGS+=($FZF_ARGS)
+  fi
+
+  _FZF_ARGS+=(
+    --ansi
+    --no-sort
+    # --no-mouse
+    --layout "reverse"
+    --multi
+    --header "git grep ${_GREP_ARGS[*]}"
+    --preview "filename=\$(echo {} | pcregrep -o1 '^([^:]+):([0-9]+):'); fileext=\$(echo \$filename | pcregrep -o1 '.*\\.([^.]+)$'); lineno=\$(echo {} | pcregrep -o2 '^([^:]+):([0-9]+):'); echo \"\${filename}:\${lineno}\"; echo '$TERMINAL_SEP'; ${PREVIEW_FILE_COMMAND}"
+    --preview-window 'down:wrap:hidden'
+    --bind '?:toggle-preview'
+  )
+  export _FZF_ARGS
+}
+
+_GREP_ARGS+=("$@")
+
+if ! test -t 1; then
+  git grep "${_GREP_ARGS[@]}"
+  exit $?
+fi
+_GREP_ARGS=(
+  "--color=always"
+  "${_GREP_ARGS[@]}"
+)
+
+create_fzf_args "$@"
+
+if check_debug; then
+  echo "_GREP_ARGS: ${_GREP_ARGS[*]}"
+  echo "_FZF_ARGS: ${_FZF_ARGS[*]}"
+  exit 0
+fi
+
+git grep "${_GREP_ARGS[@]}" | fzf "${_FZF_ARGS[@]}"

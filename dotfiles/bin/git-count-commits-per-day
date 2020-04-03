@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+git count-commits-per-period '%Y-%m-%d' "$@"

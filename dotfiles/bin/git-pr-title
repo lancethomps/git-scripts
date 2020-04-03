@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+BRANCH_REGEX='^([A-Z]{2,5}-[0-9]{1,10})?(.*)'
+
+if test -z "${PR_TO_REF:-}"; then
+  if test -n "${1:-}" && [[ "$1" != '-'* ]]; then
+    PR_TO_REF="$1"
+    shift
+  else
+    PR_TO_REF="master"
+  fi
+fi
+git_current_branch="$(git current-branch)"
+
+echo "$(echo "$git_current_branch" | pcregrep -o1 "$BRANCH_REGEX")$(echo "$git_current_branch" | pcregrep -o2 "$BRANCH_REGEX" | sed -E 's/[_-]/ /g')"

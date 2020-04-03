@@ -5,12 +5,17 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-git branches-older "$@"
+GIT_CURRENT_BRANCH="$(git current-branch)"
+GIT_BRANCH="$(git branches-info refs/remotes/origin/ --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g' | fzf --ansi --no-sort --layout "reverse" --header "Current branch: ${GIT_CURRENT_BRANCH}" | pcregrep -o1 '\t([^\t]+)$')"
 
-if confirm_with_auto 'Delete remote branches?'; then
-  git_push_args='--delete'
-  if check_debug; then
-    git_push_args="${git_push_args} -n"
-  fi
-  OLDER_ONLY=true git branches-older "$@" | awk -F $'\t' '{ print $4 }' | sed "s/origin\///" | xargs -n 1 git push ${git_push_args} origin
+if check_debug; then
+  echo "DEBUG: git checkout ${GIT_BRANCH}"
+else
+  git checkout "${GIT_BRANCH}"
+fi
+
+if check_not_debug && check_not_false "${SKIP_PULL}"; then
+  git pull
+else
+  exit 0
 fi

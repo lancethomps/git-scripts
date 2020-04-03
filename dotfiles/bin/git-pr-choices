@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck disable=SC1090
+if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="git pr-choices"
+
+function _usage() {
+  cat << EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--help] [--debug] [--verbose] [--checkout-master] 
+
+EXAMPLES
+       ${_SCRIPT_NAME}
+       ${_SCRIPT_NAME} --checkout-master
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      shift
+      export debug_mode=true
+      ;;
+    --verbose)
+      shift
+      export verbose=true
+      ;;
+    --checkout-master)
+      shift
+      CHECKOUT_MASTER=true
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "Unknown option: $1"
+      _usage
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+_GIT_PR_CHOICE_SKIP="Skip and dont switch back to master branch"
+_GIT_PR_CHOICE_GROUP="Use a preconfigured git pr alias group: git pr-{group}"
+_GIT_PR_CHOICE_REVIEWERS="Enter reviewers and create PR"
+_GIT_PR_CHOICE_BROWSER="Create PR in browser"
+
+_GIT_PR_CHOICES=(
+  "${_GIT_PR_CHOICE_GROUP}"
+  "${_GIT_PR_CHOICE_REVIEWERS}"
+  "${_GIT_PR_CHOICE_BROWSER}"
+  "${_GIT_PR_CHOICE_SKIP}"
+)
+
+pr_action="$(join_by_newline "${_GIT_PR_CHOICES[@]}" | fzf --no-mouse --no-sort --layout "reverse" --header "Select a PR action.")"
+prompt_exit_val="$?"
+if ! test "$prompt_exit_val" -eq 0; then
+  echo
+  exit "$prompt_exit_val"
+fi
+
+function maybe_checkout_master() {
+  if check_true "${CHECKOUT_MASTER-}"; then
+    git com
+  else
+    return 0
+  fi
+}
+
+if test "$pr_action" = "${_GIT_PR_CHOICE_SKIP}"; then
+  exit 0
+elif test "$pr_action" = "${_GIT_PR_CHOICE_BROWSER}"; then
+  git pr
+  maybe_checkout_master
+elif test "$pr_action" = "${_GIT_PR_CHOICE_GROUP}"; then
+  pr_action_user_input="$(ask_user_for_input "Please enter the git pr alias group.")"
+  git pr-${pr_action_user_input}
+  maybe_checkout_master
+elif test "$pr_action" = "${_GIT_PR_CHOICE_REVIEWERS}"; then
+  pr_action_user_input="$(ask_user_for_input "Please enter a CSV list of reviewers.")"
+  git bitbucket-pr --reviewers "${pr_action_user_input}"
+  maybe_checkout_master
+fi

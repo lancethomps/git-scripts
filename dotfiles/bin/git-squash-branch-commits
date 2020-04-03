@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace
+##################################################################################################################################################
+
+curr_branch="$(git current-branch)"
+
+git reset "$(git merge-base "$curr_branch" origin/master)"
+git status
+git add --all
+git commit
+
+echo 'Finish by running: git push --force'

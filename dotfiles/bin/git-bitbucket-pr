@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck disable=SC1090
+if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+export PR_TO_REF="${PR_TO_REF:-origin/master}"
+
+git_url="$(git remote -v | head -1 | awk '{ print $2 }')"
+scm_project="$(echo "$git_url" | pcregrep -o6 "$GIT_URL_REGEX")"
+git_repo_name="$(echo "$git_url" | pcregrep -o7 "$GIT_URL_REGEX")"
+git_current_branch="$(git current-branch)"
+
+stash_create_pr_args=(
+  --project "$scm_project"
+  --repo "$git_repo_name"
+  --from-ref "$git_current_branch"
+  --to-ref "${PR_TO_REF/origin\//}"
+)
+
+if test -n "${1:-}"; then
+  stash_create_pr_args+=("$@")
+fi
+
+has_title=false
+has_description=false
+
+for arg; do
+  if test "$arg" = '--title'; then
+    has_title=true
+  elif test "$arg" = '--description'; then
+    has_description=true
+  fi
+done
+
+if test "$has_title" = 'false'; then
+  stash_create_pr_args+=(
+    --title
+    "$(git pr-title)"
+  )
+fi
+
+if test "$has_description" = 'false'; then
+  stash_create_pr_args+=(
+    --description
+    "$(git pr-description)"
+  )
+fi
+
+if test "${debug_mode:-}" = true; then
+  echo stash_create_pr "${stash_create_pr_args[@]}"
+else
+  stash_create_pr "${stash_create_pr_args[@]}"
+fi

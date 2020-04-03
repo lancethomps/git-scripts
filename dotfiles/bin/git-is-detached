@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+test "$(git rev-parse --abbrev-ref HEAD)" = HEAD

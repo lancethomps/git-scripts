@@ -168,7 +168,7 @@ function ask_user_for_input() {
 
 #dotfiles=os
 function get_terminal_columns() {
-  if [ -z "$COLUMNS" ]; then
+  if [ -z "${COLUMNS-}" ]; then
     COLUMNS="$(stty -a | head -1 | command grep -ioE 'columns [0-9]+' | sed -E 's/[^0-9]//g')"
     if [ -z "$COLUMNS" ]; then
       COLUMNS="$(stty -a | head -1 | command grep -ioE '[0-9]+ columns' | sed -E 's/[^0-9]//g')"

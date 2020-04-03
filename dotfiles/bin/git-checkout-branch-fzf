@@ -14,7 +14,7 @@ else
   git checkout "${GIT_BRANCH}"
 fi
 
-if check_not_debug && check_not_false "${SKIP_PULL}"; then
+if check_not_debug && check_not_false "${SKIP_PULL-}"; then
   git pull
 else
   exit 0

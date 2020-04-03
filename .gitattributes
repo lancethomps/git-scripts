@@ -1,0 +1,64 @@
+#
+# This file overrides the Git automatic line-ending normalization when core.autocrlf=true
+#
+# Preferably in a heterogeneous environment (Windows, Mac, Unix) developers will set core.autocrlf=false
+# so that version control will leave line endings unchanged.
+# (eg. build on Windows, deploy to Unix - do not want windows line-endings on shell scripts).
+# But can't guarantee that, so use this file.
+# git config --list
+# git config --global core.autocrlf false
+#
+# Avoid using wildcard '* text auto' - causes all manner of problems.
+#
+*					-text
+
+*.bat	text eol=crlf
+*.cmd	text eol=crlf
+
+*.cgi	text eol=lf
+*.conf			text eol=lf
+*.css	text eol=lf
+*.dtd	text eol=lf
+*.ftl	text eol=lf
+*.ipl	text eol=lf
+*.java	text eol=lf
+*.js	text eol=lf
+*.json			text eol=lf
+*.md				text eol=lf
+*.pl	text eol=lf
+*.pm	text eol=lf
+*.properties	text eol=lf
+*.py	text eol=lf
+*.sass	text eol=lf
+*.scss	text eol=lf
+*.sh	text eol=lf
+*.tst	text eol=lf
+*.txt	text eol=lf
+*.xml	text eol=lf
+*.xsd	text eol=lf
+*.xsl	text eol=lf
+
+# Binaries
+*.class	binary
+*.dat	binary
+*.db	binary
+*.dll	binary
+*.eot	binary
+*.exe	binary
+*.gif	binary
+*.icns	binary
+*.ico	binary
+*.jar	binary
+*.jks	binary
+*.jpg	binary
+*.pdb	binary
+*.pdf	binary
+*.png	binary
+*.PNG	binary
+*.ttf	binary
+*.war	binary
+*.woff	binary
+*.woff2 binary
+*.zip	binary
+
+# EoF

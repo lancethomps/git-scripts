@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
+##################################################################################################################################################
+
+if test -z "${1-}"; then
+  echo "The first argument must be a date in absolute or relative format."
+  exit 1
+fi
+
+if ! date_millis="$(gdate -d "$1" +%s%3N)"; then
+  echo "Could not parse date: $1"
+  exit 1
+fi
+shift
+
+newer_branches=''
+older_branches=''
+
+while read -r branch_info; do
+  branch_date="$(echo "$branch_info" | awk -F $'\t' '{ print $1 }')"
+  if ! branch_date_millis="$(gdate -d "$branch_date" +%s%3N)"; then
+    echo "Could not parse branch date: $branch_date | $branch_info"
+    exit 1
+  fi
+  if ((branch_date_millis <= date_millis)); then
+    older_branches="${older_branches}${branch_info}"$'\n'
+  else
+    newer_branches="${newer_branches}${branch_info}"$'\n'
+  fi
+done < <(git branches-info refs/remotes/origin --color=always "$@" | grep -v -E "$GIT_BRANCH_SKIP_REGEX")
+
+if test -n "$newer_branches"; then
+  newer_branches="${newer_branches::-1}"
+fi
+if test -n "$older_branches"; then
+  older_branches="${older_branches::-1}"
+fi
+
+if ! test "$OLDER_ONLY" = 'true'; then
+  echo "NEWER..."
+  echo "$newer_branches"
+
+  echo
+  echo "OLDER..."
+fi
+
+echo "$older_branches"

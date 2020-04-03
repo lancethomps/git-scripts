@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
+##################################################################################################################################################
+
+branch_args=''
+if test -z "${1:-}" && check_not_true "${NO_BRANCHES_INFO_BRANCH_ARGS:-}"; then
+  branch_args='refs/remotes/origin/'
+fi
+
+git for-each-ref ${branch_args} "$@" --sort=-committerdate --format="${GIT_BRANCH_REF_FORMAT}"

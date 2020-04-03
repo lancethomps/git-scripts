@@ -8,9 +8,12 @@ BREW_FORMULAS=(
   fzf
   gawk
   gnu-sed
-  jq
   pcre
 )
+
+if ! command -v jq >/dev/null 2>&1; then
+  BREW_FORMULAS+=(jq)
+fi
 
 echo "Installing required Homebrew formulas..."
 brew install "${BREW_FORMULAS[@]}"

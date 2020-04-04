@@ -3,7 +3,7 @@
 shopt -s expand_aliases
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
-# shellcheck disable=SC1090
+# shellcheck source=bin/.git_scripts_common_copy.sh
 source "$_SCRIPT_DIR/.git_scripts_common_copy.sh"
 
 function export_if_missing() {

@@ -1,31 +1,74 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
 if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
-# shellcheck disable=SC1090
+# shellcheck source=bin/.git_command_defaults.sh disable=SC2016
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
-set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-function usage() {
+DIRECTION="outgoing"
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0" | sed -E 's/^git-/git /g')"
+
+function _usage() {
   cat << EOF
-usage: git copy-modified-files [--from] <copy_to_or_from_dir>
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--help] [--debug] [--verbose] [--from] <copy_to_or_from_dir>
+
+EXAMPLES
+       ${_SCRIPT_NAME} ~/github/to-repo
+       ${_SCRIPT_NAME} --from ~/github/from-repo
 EOF
 }
+##################################################################################################################################################
 
-if test "${1:-}" = "--from"; then
-  DIRECTION="incoming"
-  shift
-else
-  DIRECTION="outgoing"
+################################################################# SCRIPTARGS #####################################################################
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      shift
+      export debug_mode=true
+      ;;
+    --verbose)
+      shift
+      export verbose=true
+      ;;
+    --from)
+      shift
+      DIRECTION="incoming"
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "Unknown option: $1"
+      _usage
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if test -z "${1:-}"; then
+  _usage "$@"
+  exit 1
 fi
+##################################################################################################################################################
 
 COPY_DIR="${1:-}"
 
-if test -z "${COPY_DIR:-}"; then
-  usage
-  exit 1
-elif ! test -e "${COPY_DIR}"; then
-  echo "Directory to copy to does not exist: ${COPY_DIR}"
+if ! test -e "${COPY_DIR}"; then
+  echo "Directory to copy from/to does not exist: ${COPY_DIR}"
   exit 1
 fi
 
@@ -38,8 +81,17 @@ if test "$DIRECTION" = "incoming"; then
   SOURCE_DIR="${COPY_DIR}/"
   MODIFIED_FILES_CMD+=(-C "$COPY_DIR")
 fi
-MODIFIED_FILES_CMD+=(ls-files --others --exclude-standard --modified)
-MODIFIED_FILES=($(git "${MODIFIED_FILES_CMD[@]}" | sort))
+MODIFIED_FILES_CMD+=(
+  ls-files
+  --others
+  --exclude-standard
+  --modified
+)
+mapfile -t MODIFIED_FILES < <(git "${MODIFIED_FILES_CMD[@]}" | sort)
+if test -z "${MODIFIED_FILES-}"; then
+  echo "No modified files!"
+  exit 1
+fi
 FIRST_PAD="$(longest_line_length "${MODIFIED_FILES[@]}")"
 if test "$DIRECTION" = "incoming"; then
   FIRST_PAD=$((FIRST_PAD + ${#SOURCE_DIR}))
@@ -50,6 +102,7 @@ for file in "${MODIFIED_FILES[@]}"; do
   source_file="${SOURCE_DIR}${file}"
   dest_file="${DEST_DIR}${file}"
   dest_dir="$(dirname "$dest_file")"
+  # shellcheck disable=SC2059
   printf "$PRINT_FORMAT" "$source_file" "$dest_file"
 
   if check_debug; then

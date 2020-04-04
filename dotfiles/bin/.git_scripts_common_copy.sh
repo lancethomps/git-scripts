@@ -5,7 +5,7 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 function check_command() {
-  if command -v $1 > /dev/null 2>&1; then
+  if command -v "$@" > /dev/null 2>&1; then
     return 0
   else
     return 1
@@ -13,12 +13,16 @@ function check_command() {
 }
 
 if check_command gsed; then
-  alias sed_ext_in_place='gsed -i -r'
-  alias sed_ext='gsed -r'
+  export _sed_ext_in_place='gsed -i -r'
+  export _sed_ext='gsed -r'
 else
-  alias sed_ext_in_place='/usr/bin/sed -i "" -E'
-  alias sed_ext='/usr/bin/sed -E'
+  export _sed_ext_in_place='/usr/bin/sed -i "" -E'
+  export _sed_ext='/usr/bin/sed -E'
 fi
+# shellcheck disable=SC2139
+alias sed_ext_in_place="${_sed_ext_in_place}"
+# shellcheck disable=SC2139
+alias sed_ext="${_sed_ext}"
 
 function confirm() {
   local response=""
@@ -77,22 +81,24 @@ function repeat_char() {
   head -c "$2" < /dev/zero | tr '\0' "$1"
 }
 function get_sep_cols() {
-  local sep_cols=160
+  local sep_cols=160 term_cols
   if check_command 'get_terminal_columns'; then
-    local term_cols="$(get_terminal_columns)"
-    if [ ! -z "$term_cols" ]; then
+    term_cols="$(get_terminal_columns)"
+    if test -n "$term_cols"; then
       sep_cols="$term_cols"
     fi
   fi
-  if [ ! -z "$1" ]; then
+  if test -n "${1-}"; then
     sep_cols="$((sep_cols / $1))"
   fi
   echo -n "$sep_cols"
 }
 function get_terminal_sep() {
   if [ -z "${TERMINAL_SEP:-}" ]; then
-    local rep_count=$(get_sep_cols 2)
-    export TERMINAL_SEP="$(repeat_char '-' $rep_count)"
+    local rep_count
+    rep_count=$(get_sep_cols 2)
+    TERMINAL_SEP="$(repeat_char '-' "$rep_count")"
+    export TERMINAL_SEP
   fi
   return 0
 }
@@ -127,7 +133,7 @@ function should_use_pager() {
   return 0
 }
 function get_args_quoted() {
-  if [ -z "${1:-}" ]; then
+  if test -z "${1:-}"; then
     return 1
   fi
   local var
@@ -142,8 +148,8 @@ function get_args_quoted() {
     else
       var="${var//\\/\\\\}"
       var="${var//\"/\\\"}"
-      if [ ! -z "${ESCAPE_VALS-}" ]; then
-        var=$(echo "$var" | sed -E "s/([$ESCAPE_VALS])/\\\\\1/g")
+      if test -n "${ESCAPE_VALS-}"; then
+        var="$(echo "$var" | sed -E "s/([$ESCAPE_VALS])/\\\\\1/g")"
       fi
       if [ -z "$all_args" ]; then
         all_args="\"$var\""
@@ -188,7 +194,7 @@ function longest_line_length() {
       str="${str:-}${val}"$'\n'
     done
   fi
-  echo "$str" | awk 'length > max_length { max_length = length; longest_line = $0 } END { print max_length }'
+  echo "${str-}" | awk 'length > max_length { max_length = length; longest_line = $0 } END { print max_length }'
 }
 function join_by_newline() {
   join_by $'\n' "$@"

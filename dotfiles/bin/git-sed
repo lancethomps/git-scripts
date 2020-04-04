@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
 if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
-# shellcheck disable=SC1090
+# shellcheck source=bin/.git_command_defaults.sh disable=SC2016
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
@@ -47,7 +47,7 @@ do_commit() {
 
 flags='g'
 
-while [ "X$1" != "X" ]; do
+while [ "X${1-}" != "X" ]; do
   case "$1" in
     -c | --commit)
       if git status --porcelain | grep .; then
@@ -55,7 +55,7 @@ while [ "X$1" != "X" ]; do
         exit 1
       fi
       do_commit() {
-        git commit -m"replace $search with $replacement
+        git commit -m"replace ${search-} with ${replacement-}
 
 actual command:
 
@@ -63,7 +63,7 @@ actual command:
       }
       ;;
     -f | --flags)
-      if test -z "$2"; then
+      if test -z "${2-}"; then
         usage
         echo "missing argument for $1"
         exit 1
@@ -81,9 +81,9 @@ actual command:
       exit 1
       ;;
     *)
-      if test -z "$search"; then
+      if test -z "${search-}"; then
         search="$1"
-      elif test -z "$replacement"; then
+      elif test -z "${replacement-}"; then
         replacement="$1"
       else
         usage
@@ -95,7 +95,7 @@ actual command:
   shift
 done
 
-all="$search$replacement$flags"
+all="${search-}${replacement-}${flags-}"
 case "$all" in
   */*)
     ascii="$(for ((i = 32; i <= 127; i++)); do printf '%b' "\\$(printf '%03o' "$i")"; done)"
@@ -111,24 +111,27 @@ case "$all" in
     ;;
 esac
 
-r=$(xargs -r false < /dev/null > /dev/null 2>&1 && echo r)
-need_bak=$(sed -i s/hello/world/ "$(git_extra_mktemp)" > /dev/null 2>&1 || echo true)
+# shellcheck disable=SC2015
+r="$(xargs -r false < /dev/null > /dev/null 2>&1 && echo r || true)"
+need_bak="$(sed -i s/hello/world/ "$(git_extra_mktemp)" > /dev/null 2>&1 || echo true)"
 
 if [ "$need_bak" ]; then
-  command="git -c grep.fullname=false grep -lz '$search' | xargs -0$r $sed_ext_in_place 's$sep$search$sep$replacement$sep$flags'"
+  command="git -c grep.fullname=false grep -lz '${search-}' | xargs -0$r ${_sed_ext_in_place:?} 's$sep${search-}$sep${replacement-}$sep${flags-}'"
   if check_debug; then
     echo "COMMAND"
     echo_with_sep "$command"
   else
-    git -c grep.fullname=false grep -lz "$search" | xargs -0"$r" $sed_ext_in_place "s$sep$search$sep$replacement$sep$flags"
+    # shellcheck disable=SC2086,SC2090
+    git -c grep.fullname=false grep -lz "${search-}" | xargs -0"$r" ${_sed_ext_in_place:?} "s$sep${search-}$sep${replacement-}$sep${flags-}"
   fi
 else
-  command="git -c grep.fullname=false grep -lz '$search' | xargs -0$r $sed_ext_in_place 's$sep$search$sep$replacement$sep$flags'"
+  command="git -c grep.fullname=false grep -lz '${search-}' | xargs -0$r ${_sed_ext_in_place:?} 's$sep${search-}$sep${replacement-}$sep${flags-}'"
   if check_debug; then
     echo "COMMAND"
     echo_with_sep "$command"
   else
-    git -c grep.fullname=false grep -lz "$search" | xargs -0"$r" $sed_ext_in_place "s$sep$search$sep$replacement$sep$flags"
+    # shellcheck disable=SC2086,SC2090
+    git -c grep.fullname=false grep -lz "${search-}" | xargs -0"$r" ${_sed_ext_in_place:?} "s$sep${search-}$sep${replacement-}$sep${flags-}"
   fi
 fi
 do_commit

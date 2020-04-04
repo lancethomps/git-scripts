@@ -10,6 +10,7 @@ before_install:
 - tar --xz -xvf shellcheck-"${scversion}".linux.x86_64.tar.xz
 - sudo cp shellcheck-"${scversion}"/shellcheck /usr/bin/
 - export PATH="/usr/bin:${PATH}"
+- echo "$PATH"
 - which -a shellcheck
 - shellcheck --version
 

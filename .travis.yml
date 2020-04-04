@@ -1,3 +1,15 @@
 language: shell
+sudo: required
+os:
+- linux
+
+before_install:
+- sudo apt-get update -q
+- export scversion="stable" # or "v0.4.7", or "latest"
+- wget "https://storage.googleapis.com/shellcheck/shellcheck-${scversion}.linux.x86_64.tar.xz"
+- tar --xz -xvf shellcheck-"${scversion}".linux.x86_64.tar.xz
+- sudo cp shellcheck-"${scversion}"/shellcheck /usr/bin/
+- /usr/bin/shellcheck --version
+
 script:
 - make test

@@ -8,9 +8,13 @@
 script_dir="$(dirname "$0")"
 hook_name="$(basename "$0")"
 
+function echo_sep() {
+  echo '----------------------------------------------------------------------------------'
+}
+
 hook_dir="$script_dir/$hook_name.d"
 if ! test -e "$hook_dir"; then
-  echo "No hooks found at ${hook_dir}"
+  echo "[ERROR] No hooks found at ${hook_dir}"
   exit 1
 fi
 
@@ -20,7 +24,9 @@ if test "${#hook_scripts[@]}" -gt 0; then
   stdin="$(cat /dev/stdin)"
 
   for hook in "${hook_scripts[@]}"; do
+    echo_sep
     echo "Running $hook_name hook at ${hook}"
+    echo_sep
 
     echo "$stdin" | "$hook" "$@"
     exit_code=$?
@@ -30,7 +36,8 @@ if test "${#hook_scripts[@]}" -gt 0; then
     fi
   done
 else
-  echo "No hooks found at ${hook_dir}"
+  echo "[ERROR] No hooks found at ${hook_dir}"
+  exit 1
 fi
 
 exit 0

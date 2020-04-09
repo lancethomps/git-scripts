@@ -9,7 +9,7 @@ HOOKS_PATH="$(git config core.hooksPath || echo "hooks")"
 if [[ "$HOOKS_PATH" == /* ]]; then
   INSTALL_TO_HOOKS_DIR="${HOOKS_PATH}"
 else
-  INSTALL_TO_HOOKS_DIR="$(git rev-parse --show-toplevel)/.git/${HOOKS_PATH}"
+  INSTALL_TO_HOOKS_DIR="$(git rev-parse --absolute-git-dir)/${HOOKS_PATH}"
 fi
 
 HOOKS_DIR="$(shell_realpath "${_SCRIPT_DIR}/../../hooks")"

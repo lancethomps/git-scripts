@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+#GIT_SCRIPTS_BASE_HOOK_SCRIPT
+
+# This script should be saved in a git repo as a hook file, e.g. .git/hooks/pre-receive.
+# It looks for scripts in the .git/hooks/${hook_name}.d directory and executes them in order,
+# passing along stdin. If any script exits with a non-zero status, this script exits.
+
+script_dir="$(dirname "$0")"
+hook_name="$(basename "$0")"
+
+hook_dir="$script_dir/$hook_name.d"
+if ! test -e "$hook_dir"; then
+  echo "No hooks found at ${hook_dir}"
+  exit 1
+fi
+
+mapfile -d $'\0' -t hook_scripts < <(find -Ls "$hook_dir" -type f -perm +111 -print0)
+
+if test "${#hook_scripts[@]}" -gt 0; then
+  stdin="$(cat /dev/stdin)"
+
+  for hook in "${hook_scripts[@]}"; do
+    echo "Running $hook_name hook at ${hook}"
+
+    echo "$stdin" | "$hook" "$@"
+    exit_code=$?
+
+    if test "$exit_code" -ne 0; then
+      exit "$exit_code"
+    fi
+  done
+else
+  echo "No hooks found at ${hook_dir}"
+fi
+
+exit 0

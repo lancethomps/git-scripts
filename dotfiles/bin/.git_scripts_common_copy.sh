@@ -24,6 +24,18 @@ alias sed_ext_in_place="${_sed_ext_in_place}"
 # shellcheck disable=SC2139
 alias sed_ext="${_sed_ext}"
 
+if ! check_command realpath; then
+  if check_command grealpath; then
+    function shell_realpath() { grealpath "$@"; }
+  elif check_command greadlink; then
+    function shell_realpath() { greadlink -f "$@"; }
+  else
+    function shell_realpath() { echo "$@"; }
+  fi
+else
+  function shell_realpath() { realpath "$@"; }
+fi
+
 function confirm() {
   local response=""
   read -r -p "${1:-Are you sure?}"$'\n'"[Y/n]> " response
@@ -42,6 +54,9 @@ function confirm_with_auto() {
     return 0
   fi
   confirm "$@"
+}
+function check_verbose() {
+  check_true "${verbose:-}" && return 0 || return 1
 }
 function check_debug() {
   check_true "${debug_mode:-}"
@@ -110,6 +125,9 @@ function echo_with_sep() {
   echo_sep
   echo "$@"
   echo_sep
+}
+function log_verbose() {
+  check_verbose && echo -e "$@" || return 0
 }
 
 #dotfiles=opts

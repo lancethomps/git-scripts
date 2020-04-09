@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=bin/.git_command_defaults.sh disable=SC2016
+if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
+##################################################################################################################################################
+
+HOOKS_PATH="$(git config core.hooksPath || echo "hooks")"
+if [[ "$HOOKS_PATH" == /* ]]; then
+  INSTALL_TO_HOOKS_DIR="${HOOKS_PATH}"
+else
+  INSTALL_TO_HOOKS_DIR="$(git rev-parse --show-toplevel)/.git/${HOOKS_PATH}"
+fi
+
+HOOKS_DIR="$(shell_realpath "${_SCRIPT_DIR}/../../hooks")"
+BASE_HOOK_SCRIPT="${HOOKS_DIR}/.base_hook_script"
+function list_hooks() {
+  find "$HOOKS_DIR" -type f -not -name '.*' -perm +111 -exec basename {} \; | sort
+}
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  cat << EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--help] [--debug] [--verbose] <hook_name>...
+       ${_SCRIPT_NAME} [--list]
+
+EXAMPLES
+       ${_SCRIPT_NAME} pre-push_make-lint
+
+HOOKS
+$(list_hooks | sed -e 's/^/       /')
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      shift
+      export debug_mode=true
+      ;;
+    --verbose)
+      shift
+      export verbose=true
+      ;;
+    --list)
+      shift
+      list_hooks
+      exit $?
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "Unknown option: $1"
+      _usage
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if test -z "${1:-}"; then
+  _usage "$@"
+  exit 1
+fi
+##################################################################################################################################################
+
+function install_base_hook_script() {
+  local hook_type install_to_file
+  hook_type="$1"
+  install_to_file="${INSTALL_TO_HOOKS_DIR}/${hook_type}"
+
+  if test -e "$install_to_file"; then
+    if test -L "$install_to_file"; then
+      if test "$(readlink "$install_to_file")" = "$BASE_HOOK_SCRIPT"; then
+        log_verbose "Base hook script already linked at ${install_to_file}"
+      else
+        echo "Unknown base hook script already linked at ${install_to_file}"
+        return 1
+      fi
+    elif ! grep -Eq '^#GIT_SCRIPTS_BASE_HOOK_SCRIPT$' "$install_to_file"; then
+      echo "An unknown base git hook already exists for the type of hook specified (${hook_type}): ${install_to_file}"
+      return 1
+    else
+      if diff -q "${install_to_file}" "${BASE_HOOK_SCRIPT}" > /dev/null 2>&1; then
+        if confirm "Base hook script differs from latest, overwrite? ${BASE_HOOK_SCRIPT} vs ${install_to_file}"; then
+          if check_debug; then
+            echo cp -fv "$BASE_HOOK_SCRIPT" "$install_to_file"
+          else
+            cp -fv "$BASE_HOOK_SCRIPT" "$install_to_file"
+          fi
+        else
+          echo "Not overwriting old base hook script at ${install_to_file}"
+        fi
+      else
+        log_verbose "No differences between installed base hook script and latest, not overwriting..."
+      fi
+    fi
+  else
+    if check_debug; then
+      echo ln -sv "$BASE_HOOK_SCRIPT" "$install_to_file"
+    else
+      ln -sv "$BASE_HOOK_SCRIPT" "$install_to_file"
+    fi
+  fi
+}
+
+function install_hook() {
+  local hook_name hook_file hook_type install_to_dir install_to_file
+  hook_name="$1"
+  hook_file="${HOOKS_DIR}/${hook_name}"
+  hook_type="${hook_name%_*}"
+  install_base_hook_script "$hook_type"
+  install_to_dir="${INSTALL_TO_HOOKS_DIR}/${hook_type}.d"
+  install_to_file="${install_to_dir}/${hook_name}"
+
+  if ! test -e "$hook_file"; then
+    echo "Specified hook (${hook_name}) does not exist at path ${hook_file}"
+    return 1
+  fi
+
+  if ! test -x "$hook_file"; then
+    echo "File for specified hook (${hook_name}) is not executable: ${hook_file}"
+    return 1
+  fi
+
+  if test -e "$install_to_file"; then
+    echo "A different git hook already exists for the type of hook specified: ${install_to_file}"
+    return 1
+  fi
+
+  if ! test -d "$install_to_dir"; then
+    if check_debug; then
+      echo mkdir -v "$install_to_dir"
+    else
+      mkdir -v "$install_to_dir"
+    fi
+  fi
+
+  if check_debug; then
+    echo ln -sv "$hook_file" "$install_to_file"
+  else
+    ln -sv "$hook_file" "$install_to_file"
+  fi
+}
+
+for hook_name in "$@"; do
+  install_hook "$hook_name"
+done

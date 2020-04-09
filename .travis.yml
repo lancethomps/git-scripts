@@ -18,4 +18,4 @@ before_install:
 - shellcheck --version
 
 script:
-- make test
+- make ci

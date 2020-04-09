@@ -5,18 +5,19 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-git fetch
-GIT_CURRENT_BRANCH="$(git current-branch)"
-GIT_BRANCH="$(git branches-info refs/remotes/origin/ --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g' | fzf --ansi --no-sort --layout "reverse" --header "Current branch: ${GIT_CURRENT_BRANCH}" | pcregrep -o1 '\t([^\t]+)$')"
+mapfile -t FOUND_FILES < <(git grep --name-only "$@")
 
-if check_debug; then
-  echo "DEBUG: git checkout ${GIT_BRANCH}"
-else
-  git checkout "${GIT_BRANCH}"
+if test "${#FOUND_FILES[@]}" -eq 0; then
+  exit 1
 fi
 
-if check_not_debug && check_not_false "${SKIP_PULL-}"; then
-  git pull
+echo 'Matching Files
+'"$(echo_sep)"'
+'"$(join_by_newline "${FOUND_FILES[@]}")"'
+'
+
+if confirm_with_auto "Open files in IntelliJ?"; then
+  idea "${FOUND_FILES[@]}"
 else
-  exit 0
+  exit 1
 fi

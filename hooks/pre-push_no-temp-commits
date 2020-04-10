@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+if git log --pretty='format:%s' '@{upstream}..' 2> /dev/null | grep -Eq '^(temp|tmp)$'; then
+  echo "Trying to push a commit with just a 'temp' or 'tmp' message. See git log '@{upstream}..'"
+  exit 1
+fi
+
+exit 0

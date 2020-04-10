@@ -140,6 +140,12 @@ function install_hook() {
   fi
 
   if test -e "$install_to_file"; then
+    if test -L "$install_to_file"; then
+      if test "$(readlink "$install_to_file")" = "$hook_file"; then
+        log_verbose "Hook script already linked at ${install_to_file}"
+        return 0
+      fi
+    fi
     echo "A different git hook already exists for the type of hook specified: ${install_to_file}"
     return 1
   fi

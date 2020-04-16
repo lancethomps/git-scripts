@@ -11,8 +11,30 @@ GIT_BRANCH="$1"
 shift
 GIT_MERGE_BASE="$(git merge-base "${GIT_CURRENT_BRANCH}" "${GIT_BRANCH}")"
 
+################################################################# SCRIPTARGS #####################################################################
+START_ARGS=()
+END_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    --debug)
+      shift
+      export debug_mode=true
+      ;;
+    --)
+      END_ARGS+=("$@")
+      shift
+      break
+      ;;
+    *)
+      START_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
 if check_debug; then
-  echo git diff "$@" "${GIT_MERGE_BASE}" "${GIT_CURRENT_BRANCH}"
+  echo git diff "${START_ARGS[@]}" "${GIT_MERGE_BASE}" "${GIT_CURRENT_BRANCH}" "${END_ARGS[@]}"
 else
-  git diff "$@" "${GIT_MERGE_BASE}" "${GIT_CURRENT_BRANCH}"
+  git diff "${START_ARGS[@]}" "${GIT_MERGE_BASE}" "${GIT_CURRENT_BRANCH}" "${END_ARGS[@]}"
 fi

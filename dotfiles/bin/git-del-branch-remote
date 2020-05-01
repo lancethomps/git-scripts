@@ -17,7 +17,11 @@ if test -z "${1:-}" && ! confirm_with_auto "Delete local and remote branch '${BR
   exit 1
 fi
 
-git push --delete origin "${BRANCH_NAME}"
+if ! git has-upstream; then
+  echo "No upstream, not deleting remote branch..."
+else
+  git push --delete origin "${BRANCH_NAME}"
+fi
 
 if test "$CURRENT_BRANCH_NAME" = "${BRANCH_NAME}"; then
   git checkout master

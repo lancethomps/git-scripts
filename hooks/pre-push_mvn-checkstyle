@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset -o pipefail
+##################################################################################################################################################
+
+function join_by() {
+  local d="$1"
+  shift
+  echo -n "$1"
+  shift
+  printf "%s" "${@/#/$d}"
+}
+
+revision_range='@{upstream}..'
+if ! git has-upstream; then
+  revision_range="$(git log --max-count=30 --oneline --decorate | pcregrep -o1 '^([^\s]+) \([^\)]*origin\/' | head -1).."
+fi
+
+mapfile -t outgoing_files < <(git log --name-only --diff-filter=ACMR --pretty=format: "$revision_range")
+
+if test "${#outgoing_files[@]}" -ne 0; then
+  includes=()
+  for outgoing_file in "${outgoing_files[@]}"; do
+    includes+=("**/$(basename "$outgoing_file")")
+  done
+  includes_value="$(join_by "," "${includes[@]}")"
+  echo mvn checkstyle:check@validate -Dcheckstyle.includes="$includes_value" -Dcheckstyle.resourceIncludes="$includes_value" '|' grep -Ev '^(\[INFO\]|Download)'
+  mvn checkstyle:check@validate -Dcheckstyle.includes="$includes_value" -Dcheckstyle.resourceIncludes="$includes_value" | grep -Ev '^(\[INFO\]|Download)' || exit 1
+else
+  echo "No added/copied/modified/renamed files found"
+fi
+
+exit 0

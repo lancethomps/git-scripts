@@ -16,7 +16,7 @@ echo 'Matching Files
 '"$(join_by_newline "${FOUND_FILES[@]}")"'
 '
 
-if confirm_with_auto "Open files in IntelliJ?"; then
+if confirm_with_auto "Open files in VSCode?"; then
   code -r "${FOUND_FILES[@]}"
 else
   exit 1

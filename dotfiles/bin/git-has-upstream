@@ -3,11 +3,4 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-if temp_commits="$(git log --pretty='format:%s %h' '@{upstream}..' 2> /dev/null | grep -Ei '^(temp|tmp)')"; then
-  # shellcheck disable=SC2016
-  echo 'Trying to push a commit that starts with a `temp` or `tmp` message. Matching commits below, see `git log "@{upstream}.."` for full listing.'
-  echo "$temp_commits"
-  exit 1
-fi
-
-exit 0
+git rev-list --left-right '@{upstream}...HEAD' > /dev/null 2>&1 || exit 1

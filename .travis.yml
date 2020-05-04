@@ -16,6 +16,7 @@ before_install:
 - export PATH="/opt/shellcheck:${PATH}"
 - which -a shellcheck
 - shellcheck --version
+- echo "shfmt $(shfmt --version)"
 
 script:
 - make ci

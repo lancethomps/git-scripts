@@ -6,7 +6,7 @@ if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR
 ##################################################################################################################################################
 
 HOOKS_PATH="$(git config core.hooksPath || echo "hooks")"
-if [[ "$HOOKS_PATH" == /* ]]; then
+if [[ $HOOKS_PATH == /* ]]; then
   INSTALL_TO_HOOKS_DIR="${HOOKS_PATH}"
 else
   INSTALL_TO_HOOKS_DIR="$(git rev-parse --absolute-git-dir)/${HOOKS_PATH}"

@@ -5,7 +5,7 @@ set -o errexit -o errtrace -o nounset
 BRANCH_REGEX='^([A-Z]{2,5}-[0-9]{1,10})?(.*)'
 
 if test -z "${PR_TO_REF:-}"; then
-  if test -n "${1:-}" && [[ "$1" != '-'* ]]; then
+  if test -n "${1:-}" && [[ $1 != '-'* ]]; then
     PR_TO_REF="$1"
     shift
   else

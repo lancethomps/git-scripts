@@ -59,7 +59,7 @@ done
 ##################################################################################################################################################
 
 _GIT_PR_CHOICE_SKIP="Skip and dont switch back to master branch"
-_GIT_PR_CHOICE_GROUP="Use a preconfigured git pr alias group: git pr-{group}"
+_GIT_PR_CHOICE_GROUP="Use git-bitbucket-pr reviewer groups: git bitbucket-pr --reviewer-groups <groups>"
 _GIT_PR_CHOICE_REVIEWERS="Enter reviewers and create PR"
 _GIT_PR_CHOICE_BROWSER="Create PR in browser"
 
@@ -85,16 +85,16 @@ function maybe_checkout_master() {
   fi
 }
 
-if test "$pr_action" = "${_GIT_PR_CHOICE_SKIP}"; then
+if test "${pr_action}" = "${_GIT_PR_CHOICE_SKIP}"; then
   exit 0
-elif test "$pr_action" = "${_GIT_PR_CHOICE_BROWSER}"; then
+elif test "${pr_action}" = "${_GIT_PR_CHOICE_BROWSER}"; then
   git pr
   maybe_checkout_master
-elif test "$pr_action" = "${_GIT_PR_CHOICE_GROUP}"; then
-  pr_action_user_input="$(ask_user_for_input "Please enter the git pr alias group.")"
-  git "pr-${pr_action_user_input}"
+elif test "${pr_action}" = "${_GIT_PR_CHOICE_GROUP}"; then
+  pr_action_user_input="$(ask_user_for_input "Please enter a CSV list of reviewer groups.")"
+  git bitbucket-pr --reviewer-groups "${pr_action_user_input}"
   maybe_checkout_master
-elif test "$pr_action" = "${_GIT_PR_CHOICE_REVIEWERS}"; then
+elif test "${pr_action}" = "${_GIT_PR_CHOICE_REVIEWERS}"; then
   pr_action_user_input="$(ask_user_for_input "Please enter a CSV list of reviewers.")"
   git bitbucket-pr --reviewers "${pr_action_user_input}"
   maybe_checkout_master

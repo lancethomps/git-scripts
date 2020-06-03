@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=bin/.git_command_defaults.sh disable=SC2016
+if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  cat << EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--help] [--debug] [--verbose] [--files] [--select-files] [--file | -f <file_to_commit>...] [--message | -m <message>] <message_or_files>
+
+EXAMPLES
+       ${_SCRIPT_NAME}
+EOF
+}
+##################################################################################################################################################
+
+args_are_files="${args_are_files:-false}"
+commit_files=()
+
+################################################################# SCRIPTARGS #####################################################################
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --files)
+      args_are_files=true
+      shift
+      ;;
+    --select-files)
+      select_files=true
+      shift
+      ;;
+    --file | -f)
+      shift
+      commit_files+=("$1")
+      shift
+      ;;
+    --message | -m)
+      shift
+      commit_message="$1"
+      args_are_files=true
+      shift
+      ;;
+    --)
+      shift
+      args_are_files=true
+      break
+      ;;
+    -*)
+      echo "Unknown option: $1"
+      _usage
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+if check_true "${args_are_files-}"; then
+  commit_files+=("$@")
+  shift "$#"
+fi
+
+if check_true "${select_files-}"; then
+  mapfile -t commit_files_add < <(git ls-files --others --exclude-standard --modified | fzf --ansi --multi --no-sort --layout "reverse" --header "Select files to commit")
+  commit_files+=("${commit_files_add[@]}")
+fi
+
+if test "${#commit_files[@]}" -eq 0; then
+  commit_files+=(".")
+fi
+
+if test -n "${1-}"; then
+  commit_message="${commit_message-}$*"
+fi
+
+if test -z "${commit_message-}"; then
+  commit_message="$(ask_user_for_input "Please enter a commit message")"
+fi
+
+if check_debug; then
+  echo "commit_files: ${commit_files[*]}"
+  echo "commit_message: ${commit_message}"
+  if ! confirm "Commit and push?"; then
+    exit 0
+  fi
+fi
+
+git add "${commit_files[@]}"
+git commit -m "$commit_message"
+git push-allow-no-upstream

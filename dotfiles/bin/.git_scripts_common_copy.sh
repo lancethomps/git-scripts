@@ -56,7 +56,7 @@ function confirm_with_auto() {
   confirm "$@"
 }
 function check_verbose() {
-  check_true "${verbose:-}" && return 0 || return 1
+  check_true "${verbose:-}"
 }
 function check_debug() {
   check_true "${debug_mode:-}"
@@ -127,7 +127,10 @@ function echo_with_sep() {
   echo_sep
 }
 function log_verbose() {
-  check_verbose && echo -e "$@" || return 0
+  if check_verbose; then
+    echo "$@"
+  fi
+  return 0
 }
 
 #dotfiles=opts

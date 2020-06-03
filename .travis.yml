@@ -8,7 +8,7 @@ cache:
 before_install:
 - export scversion="stable" # or "v0.4.7", or "latest"
 - mkdir -p /opt/shellcheck
-- "[[ ! -e /opt/shellcheck/shellcheck ]] && wget -qO- https://storage.googleapis.com/shellcheck/shellcheck-${scversion}.linux.x86_64.tar.xz
+- "[[ ! -e /opt/shellcheck/shellcheck ]] && wget -qO- https://github.com/koalaman/shellcheck/releases/download/${scversion}/shellcheck-${scversion}.linux.x86_64.tar.xz
   | tar -xJv -O shellcheck-${scversion}/shellcheck | sudo tee /opt/shellcheck/shellcheck
   > /dev/null || true"
 - sudo chmod +x /opt/shellcheck/shellcheck

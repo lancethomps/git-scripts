@@ -22,12 +22,16 @@ function list_hooks() {
 _SCRIPT_NAME="$(basename "$0")"
 
 function _usage() {
+  local SYN_IND
+  SYN_IND="$(head -c "$(($(echo -n "${_SCRIPT_NAME}" | wc -c) - 5))" < /dev/zero | tr '\0' " ")"
+
   cat << EOF
 NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--help] [--debug] [--verbose] <hook_name>...
+       ${_SCRIPT_NAME} <hook_name>...
+       ${SYN_IND}      [--help] [--debug] [--verbose]
        ${_SCRIPT_NAME} [--list]
 
 EXAMPLES

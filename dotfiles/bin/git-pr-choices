@@ -9,12 +9,16 @@ if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR
 _SCRIPT_NAME="git pr-choices"
 
 function _usage() {
+  local SYN_IND
+  SYN_IND="$(head -c "$(($(echo -n "${_SCRIPT_NAME}" | wc -c) - 5))" < /dev/zero | tr '\0' " ")"
+
   cat << EOF
 NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--help] [--debug] [--verbose] [--checkout-master] 
+       ${_SCRIPT_NAME} [--checkout-master]
+       ${SYN_IND}      [--help] [--debug] [--verbose]
 
 EXAMPLES
        ${_SCRIPT_NAME}

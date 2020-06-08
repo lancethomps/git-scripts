@@ -124,4 +124,10 @@ if check_debug; then
   exit 0
 fi
 
-git grep "${_GREP_ARGS[@]}" | fzf "${_FZF_ARGS[@]}"
+if command -v ask_to_open_grepped_lines > /dev/null 2>&1; then
+  results="$(git grep "${_GREP_ARGS[@]}" | fzf "${_FZF_ARGS[@]}")"
+  results_exit_code="$?"
+  ask_to_open_grepped_lines --lines-exit-code "$results_exit_code" "$results"
+else
+  git grep "${_GREP_ARGS[@]}" | fzf "${_FZF_ARGS[@]}"
+fi

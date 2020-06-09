@@ -10,8 +10,8 @@ set -o errexit -o errtrace -o nounset
 _SCRIPT_NAME="$(basename "$0")"
 
 function _usage() {
-  local SYN_IND
-  SYN_IND="$(head -c "$(($(echo -n "${_SCRIPT_NAME}" | wc -c) - 5))" < /dev/zero | tr '\0' " ")"
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" < /dev/zero | tr '\0' " ")"
 
   cat << EOF
 NAME
@@ -19,7 +19,7 @@ NAME
 
 SYNOPSIS
        ${_SCRIPT_NAME} [--files] [--select-files] [--file | -f <file_to_commit>...] [--message | -m <message>] <message_or_files>
-       ${SYN_IND}      [--help] [--debug] [--verbose]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
        ${_SCRIPT_NAME}

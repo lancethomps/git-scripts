@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if git diff --no-ext-diff --quiet && ! git has-untracked; then
+if git diff --no-ext-diff --quiet "$@" && ! git has-untracked; then
   exit 0
 else
   exit 1

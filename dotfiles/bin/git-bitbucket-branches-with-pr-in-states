@@ -5,11 +5,15 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-mapfile -t bb_branches < <(git bitbucket-branches-with-pr-in-states MERGED | sed -E 's/^/refs\/remotes\/origin\//g')
+states="${1:-DECLINED,MERGED,OPEN}"
 
-if test "${#bb_branches[@]}" -eq 0; then
-  echo "No Bitbucket MERGED branches found"
+bb_project="$(git ui-url-project)"
+bb_repo="$(git ui-url-repo)"
+
+bb_merged_branches="$(wf_stash_py_api repo_branches_with_pr_in_states "$bb_project" "$bb_repo" "$states" -1 | jq --raw-output '.values[].displayId')"
+
+if test -z "$bb_merged_branches"; then
   exit 1
 fi
 
-git branches-info "${bb_branches[@]}" --color=always "$@"
+echo "$bb_merged_branches"

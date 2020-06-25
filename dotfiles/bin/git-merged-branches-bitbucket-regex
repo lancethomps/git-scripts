@@ -5,11 +5,7 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-bb_project="$(git ui-url-project)"
-bb_repo="$(git ui-url-repo)"
-
-bb_merged_branches_regex="$(wf_stash_py_api repo_merged_branches "$bb_project" "$bb_repo" -1 | jq --raw-output '.values[].displayId')"
-if test -z "$bb_merged_branches_regex"; then
+if ! bb_merged_branches_regex="$(git merged-branches-bitbucket-raw)"; then
   exit 1
 fi
 

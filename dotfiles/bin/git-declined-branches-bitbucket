@@ -5,10 +5,10 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-mapfile -t bb_branches < <(git bitbucket-branches-with-pr-in-states MERGED | sed -E 's/^/refs\/remotes\/origin\//g')
+mapfile -t bb_branches < <(git bitbucket-branches-with-pr-in-states DECLINED | sed -E 's/^/refs\/remotes\/origin\//g')
 
 if test "${#bb_branches[@]}" -eq 0; then
-  echo "No Bitbucket MERGED branches found"
+  echo "No Bitbucket DECLINED branches found"
   exit 1
 fi
 

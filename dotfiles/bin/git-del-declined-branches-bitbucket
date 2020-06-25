@@ -5,11 +5,23 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-mapfile -t bb_branches < <(git bitbucket-branches-with-pr-in-states MERGED | sed -E 's/^/refs\/remotes\/origin\//g')
+git declined-branches-bitbucket "$@"
 
-if test "${#bb_branches[@]}" -eq 0; then
-  echo "No Bitbucket MERGED branches found"
-  exit 1
+if confirm_with_auto 'Delete remote branches?'; then
+  git_push_args='--delete'
+  if check_debug; then
+    git_push_args="${git_push_args} -n"
+  fi
+
+  branches_to_skip="$(ask_user_for_input "How many branches should be skipped? Empty for none." true)"
+  if test -n "${branches_to_skip-}"; then
+    branches_to_skip="$((branches_to_skip + 1))"
+    git declined-branches-bitbucket "$@" | tail +"${branches_to_skip:-0}"
+    if ! confirm_with_auto 'Continue with deletion?'; then
+      exit 1
+    fi
+  fi
+
+  # shellcheck disable=SC2086
+  git declined-branches-bitbucket "$@" | tail +"${branches_to_skip:-0}" | awk -F $'\t' '{ print $4 }' | sed "s/origin\///" | xargs -n 1 git push ${git_push_args} origin
 fi
-
-git branches-info "${bb_branches[@]}" --color=always "$@"

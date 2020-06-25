@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=bin/.git_command_defaults.sh disable=SC2016
+if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
+##################################################################################################################################################
+
+git_log_args=("$@")
+
+if [[ " $* " != *' -n '* ]] && [[ " $* " != *' --max-count'* ]]; then
+  git_log_args+=(-n 1000)
+fi
+
+mapfile -t merged_branches < <(git log --pretty=oneline --grep='^Merge pull request' "${git_log_args[@]}" |
+  pcregrep -o1 'Merge pull request #\d+ in [^ ]+ from ([^ ]+) to master' |
+  sed -E 's/^/origin\//g' |
+  xargs git branch --list --all |
+  sed -E 's/^ *//g' |
+  sed -E 's/^remotes\/origin\///g' |
+  sed -E 's/^origin\///g' |
+  sed -E 's/^/refs\/remotes\/origin\//g' |
+  sort)
+
+git branches-info "${merged_branches[@]}"

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+mapfile -t stashes_info < <(git stashes-commits)
+
+for info in "${stashes_info[@]}"; do
+  name="${info%% *}"
+  hash="${info#* }"
+  printf "%s %s " "$name" "$(git rev-parse --short "${name}^")"
+  git --no-pager log -1 --format="%s" "$hash"
+done

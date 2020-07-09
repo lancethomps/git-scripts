@@ -5,10 +5,22 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-# shellcheck source=.dotfiles/.jenkins_script_setup.sh disable=SC1091
-source "$DOTFILES/.jenkins_script_setup.sh"
+function get_url_travis() {
+  echo "https://travis-ci.org/github/$(git ui-url-project)/$(git ui-url-repo)"
+}
 
-job_url="$(get_job_url_from_repo)"
+function get_url_jenkins() {
+  # shellcheck source=.dotfiles/.jenkins_script_setup.sh disable=SC1091
+  source "$DOTFILES/.jenkins_script_setup.sh"
+
+  get_job_url_from_repo
+}
+
+if test -e ".travis.yml"; then
+  job_url="$(get_url_travis)"
+else
+  job_url="$(get_url_jenkins)"
+fi
 
 if check_debug; then
   echo "${job_url}"

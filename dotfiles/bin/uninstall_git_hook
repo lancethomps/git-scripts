@@ -16,6 +16,14 @@ HOOKS_DIR="$(shell_realpath "${_SCRIPT_DIR}/../../hooks")"
 function list_hooks() {
   find "$HOOKS_DIR" -type f -not -name '.*' -perm +111 -exec basename {} \; | sort
 }
+function list_installed_hooks() {
+  local gitscripts_base curr_dir
+  curr_dir="$(pwd)"
+  cd "$_SCRIPT_DIR/../.." || return 1
+  gitscripts_base="$(pwd)"
+  find "$INSTALL_TO_HOOKS_DIR" -type l -depth 2 -perm +111 -exec readlink {} \; | grep "$gitscripts_base" | xargs -n1 basename | sort
+  cd "$curr_dir" || return 0
+}
 
 ################################################################### USAGE ########################################################################
 _SCRIPT_NAME="$(basename "$0")"
@@ -31,12 +39,16 @@ NAME
 SYNOPSIS
        ${_SCRIPT_NAME} <hook_name>...
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+       ${SYNOP_INDENT} [--list]
 
 EXAMPLES
        ${_SCRIPT_NAME} pre-push_make-lint
 
 HOOKS
 $(list_hooks | sed -e 's/^/       /')
+
+INSTALLED HOOKS
+$(list_installed_hooks | sed -e 's/^/       /')
 EOF
 }
 ##################################################################################################################################################
@@ -55,6 +67,11 @@ while test $# -gt 0; do
     --verbose)
       shift
       export verbose=true
+      ;;
+    --list)
+      shift
+      list_installed_hooks
+      exit $?
       ;;
     --)
       shift

@@ -32,7 +32,7 @@ NAME
 SYNOPSIS
        ${_SCRIPT_NAME} <hook_name>...
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
-       ${_SCRIPT_NAME} [--list]
+       ${SYNOP_INDENT} [--list]
 
 EXAMPLES
        ${_SCRIPT_NAME} pre-push_make-lint

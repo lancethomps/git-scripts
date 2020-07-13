@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+CURRENT_BRANCH="$(git current-branch)"
+
+if test "${CURRENT_BRANCH}" = "master" || test "${REMOTE_REF}" = "refs/heads/master"; then
+  echo 'Trying to push to master branch'
+  exit 1
+fi
+
+exit 0

@@ -23,6 +23,15 @@ mapfile -d $'\0' -t hook_scripts < <(find -Ls "$hook_dir" -type f -perm +111 -pr
 if test "${#hook_scripts[@]}" -gt 0; then
   stdin="$(cat /dev/stdin)"
 
+  if test "${hook_name-}" = "pre-push"; then
+    mapfile -d " " -t PUSH_INFO < /dev/stdin
+    export PUSH_INFO
+    export LOCAL_REF="${PUSH_INFO[1]}"
+    export LOCAL_SHA="${PUSH_INFO[2]}"
+    export REMOTE_REF="${PUSH_INFO[3]}"
+    export REMOTE_SHA="${PUSH_INFO[4]}"
+  fi
+
   for hook in "${hook_scripts[@]}"; do
     echo_sep
     echo "Running $hook_name hook at ${hook}"

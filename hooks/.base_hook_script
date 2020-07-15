@@ -33,7 +33,7 @@ if test "${#hook_scripts[@]}" -gt 0; then
   fi
 
   for hook in "${hook_scripts[@]}"; do
-    echo_sep
+    echo
     echo "Running $hook_name hook at ${hook}"
     echo_sep
 

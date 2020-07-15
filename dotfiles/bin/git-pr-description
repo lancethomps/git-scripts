@@ -13,4 +13,4 @@ if test -z "${PR_TO_REF:-}"; then
 fi
 git_current_branch="$(git current-branch)"
 
-git log --left-right --cherry-pick --no-merges --reverse --format='* %s%n%w(100000,2,2)%-b' "$@" "${git_current_branch}...${PR_TO_REF}"
+git log --left-right --cherry-pick --no-merges --reverse --format='* %s%n%w(100000,2,2)%-b' "$@" "${git_current_branch}" "^${PR_TO_REF}"

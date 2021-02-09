@@ -134,6 +134,7 @@ function log_verbose() {
 }
 
 #dotfiles=opts
+# shellcheck disable=SC2120
 function should_use_pager() {
   if test -n "${use_pager:-}"; then
     if check_true "$use_pager"; then

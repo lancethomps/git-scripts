@@ -2,8 +2,8 @@
 
 S="$1"
 while [ -h "$S" ]; do
-  D="$(cd -P "$(dirname "$S")" && pwd)" && S="$(readlink "$S")" && [[ $S != /* ]] && S="$D/$S"
+  D="$(command cd -P "$(dirname "$S")" && pwd)" && S="$(readlink "$S")" && [[ $S != /* ]] && S="$D/$S"
 done
-_SCRIPT_DIR="$(cd -P "$(dirname "$S")" && pwd)"
+_SCRIPT_DIR="$(command cd -P "$(dirname "$S")" && pwd)"
 
 echo "$_SCRIPT_DIR"

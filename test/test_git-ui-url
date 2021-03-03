@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+S="${BASH_SOURCE[0]}" && while [ -h "$S" ]; do D="$(cd -P "$(dirname "$S")" && pwd)" && S="$(readlink "$S")" && [[ $S != /* ]] && S="$D/$S"; done || true && _SCRIPT_DIR="$(cd -P "$(dirname "$S")" && pwd)" && unset S D
+# shellcheck disable=SC1090
+source "${_SCRIPT_DIR}/test_common.sh"
+export exit_val=0
+##################################################################################################################################################
+
+cd "${_SCRIPT_DIR}/.."
+expected="https://github.com/lancethomps/git-scripts"
+actual="$(ignore_branch=true git-ui-url)"
+assert_equal "$expected" "$actual" "git-ui-url this repo"
+
+cd "${TMP:-/tmp}"
+expected="https://github.com/lancethomps/ltpylib"
+actual="$(git-ui-url "git@github.com:lancethomps/ltpylib.git")"
+assert_equal "$expected" "$actual" "git-ui-url other repo"
+cd "${_SCRIPT_DIR}/.."
+
+exit "$exit_val"

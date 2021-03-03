@@ -12,12 +12,17 @@ function check_command() {
   fi
 }
 
-if check_command gsed; then
-  export _sed_ext_in_place='gsed -i -r'
-  export _sed_ext='gsed -r'
+if test "$(uname)" = "Darwin"; then
+  if check_command gsed; then
+    export _sed_ext_in_place='gsed -i -r'
+    export _sed_ext='gsed -r'
+  else
+    export _sed_ext_in_place='/usr/bin/sed -i "" -E'
+    export _sed_ext='/usr/bin/sed -E'
+  fi
 else
-  export _sed_ext_in_place='/usr/bin/sed -i "" -E'
-  export _sed_ext='/usr/bin/sed -E'
+  export _sed_ext_in_place='sed -r -i'
+  export _sed_ext='sed -r'
 fi
 # shellcheck disable=SC2139
 alias sed_ext_in_place="${_sed_ext_in_place}"

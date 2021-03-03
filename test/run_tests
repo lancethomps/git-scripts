@@ -5,7 +5,7 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 cd "$_SCRIPT_DIR"
-mapfile -t test_scripts < <(find -Ls "." -type f -perm +111 -not -name run_tests)
+mapfile -t test_scripts < <(find -L "." -type f -perm +111 -not -name run_tests | sort -u)
 exit_val=0
 
 for test_script in "${test_scripts[@]}"; do

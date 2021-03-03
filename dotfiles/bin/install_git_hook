@@ -23,9 +23,9 @@ _SCRIPT_NAME="$(basename "$0")"
 
 function _usage() {
   local SYNOP_INDENT
-  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" < /dev/zero | tr '\0' " ")"
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
 
-  cat << EOF
+  cat <<EOF
 NAME
        ${_SCRIPT_NAME}
 
@@ -101,7 +101,7 @@ function install_base_hook_script() {
       echo "An unknown base git hook already exists for the type of hook specified (${hook_type}): ${install_to_file}"
       return 1
     else
-      if diff -q "${install_to_file}" "${BASE_HOOK_SCRIPT}" > /dev/null 2>&1; then
+      if diff -q "${install_to_file}" "${BASE_HOOK_SCRIPT}" >/dev/null 2>&1; then
         if confirm "Base hook script differs from latest, overwrite? ${BASE_HOOK_SCRIPT} vs ${install_to_file}"; then
           if check_debug; then
             echo cp -fv "$BASE_HOOK_SCRIPT" "$install_to_file"

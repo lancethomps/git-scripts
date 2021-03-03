@@ -4,7 +4,7 @@ function __complete_install_git_hook() {
   local COMPREPLY_ADD
   COMPREPLY=()
 
-  if command -v _allopt > /dev/null 2>&1; then
+  if command -v _allopt >/dev/null 2>&1; then
     COMPLETE_NO_FILEDIR=true _allopt "$@"
   fi
 

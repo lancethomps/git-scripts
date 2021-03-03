@@ -11,9 +11,9 @@ _SCRIPT_NAME_GIT="${_SCRIPT_NAME/git-/git }"
 
 function _usage() {
   local SYNOP_INDENT
-  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" < /dev/zero | tr '\0' " ")"
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
 
-  cat << EOF
+  cat <<EOF
 NAME
        ${_SCRIPT_NAME}
 

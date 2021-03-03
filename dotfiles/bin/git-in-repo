@@ -5,7 +5,7 @@ set -o errexit -o errtrace -o nounset
 
 if test -d .git; then
   exit 0
-elif git rev-parse --git-dir > /dev/null 2>&1; then
+elif git rev-parse --git-dir >/dev/null 2>&1; then
   exit 0
 fi
 

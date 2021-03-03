@@ -7,7 +7,7 @@ if git is-detached || test "$(git current-branch)" = 'master'; then
   exit 1
 fi
 
-git fetch &> /dev/null
+git fetch &>/dev/null
 if ! behind="$(git rev-list --left-only --count origin/master...)"; then
   exit 2
 fi

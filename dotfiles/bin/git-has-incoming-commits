@@ -3,7 +3,7 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-if commits="$(git rev-list --left-right '@{upstream}...HEAD' 2> /dev/null)"; then
+if commits="$(git rev-list --left-right '@{upstream}...HEAD' 2>/dev/null)"; then
   for commit in $commits; do
     case "$commit" in
       "<"*)

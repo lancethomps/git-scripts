@@ -3,7 +3,7 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-mapfile -t commits < <(git rev-list --left-right "$(git outgoing-commits-revision-range)" 2> /dev/null)
+mapfile -t commits < <(git rev-list --left-right "$(git outgoing-commits-revision-range)" 2>/dev/null)
 
 for commit in "${commits[@]}"; do
   case "$commit" in

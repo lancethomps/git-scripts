@@ -24,7 +24,7 @@ if test "${#hook_scripts[@]}" -gt 0; then
   stdin="$(cat /dev/stdin)"
 
   if test "${hook_name-}" = "pre-push"; then
-    mapfile -d " " -t PUSH_INFO < /dev/stdin
+    mapfile -d " " -t PUSH_INFO </dev/stdin
     export PUSH_INFO
     export LOCAL_REF="${PUSH_INFO[1]}"
     export LOCAL_SHA="${PUSH_INFO[2]}"

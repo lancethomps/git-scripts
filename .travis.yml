@@ -1,6 +1,11 @@
 language: bash
 dist: xenial
 
+addons:
+  apt:
+    packages:
+    - pcregrep
+
 cache:
   directories:
   - /opt/shellcheck

@@ -19,7 +19,7 @@ git_extra_mktemp() {
 #
 
 is_git_repo() {
-  git rev-parse --show-toplevel > /dev/null 2>&1
+  git rev-parse --show-toplevel >/dev/null 2>&1
   result=$?
   if test $result != 0; then
     echo >&2 'Not a git repo!'
@@ -30,7 +30,7 @@ is_git_repo() {
 is_git_repo
 
 usage() {
-  cat << EOF
+  cat <<EOF
 usage: git sed [ -c ] [ -f <flags> ] <search> <replacement>
 
 Run git grep and then send results to sed for replacement with the
@@ -112,8 +112,8 @@ case "$all" in
 esac
 
 # shellcheck disable=SC2015
-r="$(xargs -r false < /dev/null > /dev/null 2>&1 && echo r || true)"
-need_bak="$(sed -i s/hello/world/ "$(git_extra_mktemp)" > /dev/null 2>&1 || echo true)"
+r="$(xargs -r false </dev/null >/dev/null 2>&1 && echo r || true)"
+need_bak="$(sed -i s/hello/world/ "$(git_extra_mktemp)" >/dev/null 2>&1 || echo true)"
 
 if [ "$need_bak" ]; then
   command="git -c grep.fullname=false grep -lz '${search-}' | xargs -0$r ${_sed_ext_in_place:?} 's$sep${search-}$sep${replacement-}$sep${flags-}'"

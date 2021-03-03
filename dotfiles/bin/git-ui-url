@@ -17,7 +17,11 @@ else
     git url
     exit $?
   fi
-  git_current_branch="$(git current-branch)"
+  if check_true "${ignore_branch-}"; then
+    git_current_branch="master"
+  else
+    git_current_branch="$(git current-branch)"
+  fi
   git_cwd="$(git rev-parse --show-prefix)"
   if test -n "${git_cwd-}"; then
     git_cwd="${git_cwd::-1}"

@@ -5,19 +5,24 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 function check_command() {
-  if command -v "$@" > /dev/null 2>&1; then
+  if command -v "$@" >/dev/null 2>&1; then
     return 0
   else
     return 1
   fi
 }
 
-if check_command gsed; then
-  export _sed_ext_in_place='gsed -i -r'
-  export _sed_ext='gsed -r'
+if test "$(uname)" = "Darwin"; then
+  if check_command gsed; then
+    export _sed_ext_in_place='gsed -i -r'
+    export _sed_ext='gsed -r'
+  else
+    export _sed_ext_in_place='/usr/bin/sed -i "" -E'
+    export _sed_ext='/usr/bin/sed -E'
+  fi
 else
-  export _sed_ext_in_place='/usr/bin/sed -i "" -E'
-  export _sed_ext='/usr/bin/sed -E'
+  export _sed_ext_in_place='sed -r -i'
+  export _sed_ext='sed -r'
 fi
 # shellcheck disable=SC2139
 alias sed_ext_in_place="${_sed_ext_in_place}"
@@ -103,7 +108,7 @@ function check_not_false() {
   fi
 }
 function repeat_char() {
-  head -c "$2" < /dev/zero | tr '\0' "$1"
+  head -c "$2" </dev/zero | tr '\0' "$1"
 }
 function get_sep_cols() {
   local sep_cols=160 term_cols

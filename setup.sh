@@ -16,7 +16,7 @@ BREW_FORMULAS=(
   pcre
 )
 
-if ! command -v jq > /dev/null 2>&1; then
+if ! command -v jq >/dev/null 2>&1; then
   BREW_FORMULAS+=(jq)
 fi
 

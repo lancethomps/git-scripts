@@ -4,18 +4,23 @@ S="${BASH_SOURCE[0]}" && while [ -h "$S" ]; do D="$(cd -P "$(dirname "$S")" && p
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-cd "$_SCRIPT_DIR"
-mapfile -t test_scripts < <(find -L "." -type f -perm +111 -not -name run_tests | sort -u)
 exit_val=0
+cd "$_SCRIPT_DIR"
+
+if test "$(uname)" = "Darwin"; then
+  mapfile -d $'\0' -t test_scripts < <(find -Ls "." -type f -perm +111 -not -name run_tests -print0)
+else
+  mapfile -t test_scripts < <(find -L "." -type f -executable -not -name run_tests | sort -u)
+fi
 
 for test_script in "${test_scripts[@]}"; do
+  echo
   echo "${test_script}"
   echo "##################################################################################################################################################"
   if ! "$test_script"; then
     exit_val=1
   fi
   echo "##################################################################################################################################################"
-  echo
 done
 
 exit "$exit_val"

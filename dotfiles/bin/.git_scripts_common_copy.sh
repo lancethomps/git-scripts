@@ -43,17 +43,27 @@ function confirm() {
     [yY][eE][sS] | [yY] | "") true ;;
     [nN][oO] | [nN]) false ;;
     *)
-      echo_error "Incorrect value entered... Try again."
+      log_error "Incorrect value entered... Try again."
       confirm "$@"
       ;;
   esac
 }
+function is_auto_confirm() {
+  check_true "${auto_confirm-}"
+}
 function confirm_with_auto() {
-  if test "${auto_confirm:-}" = "true"; then
+  if is_auto_confirm; then
     echo "AUTO CONFIRMED: ${1:-}"
     return 0
   fi
   confirm "$@"
+}
+
+function log_verbose() {
+  if check_verbose; then
+    echo "$@"
+  fi
+  return 0
 }
 function check_verbose() {
   check_true "${verbose:-}"
@@ -109,7 +119,7 @@ function get_sep_cols() {
   echo -n "$sep_cols"
 }
 function get_terminal_sep() {
-  if [ -z "${TERMINAL_SEP:-}" ]; then
+  if test -z "${TERMINAL_SEP:-}"; then
     local rep_count
     rep_count=$(get_sep_cols 2)
     TERMINAL_SEP="$(repeat_char '-' "$rep_count")"
@@ -126,11 +136,33 @@ function echo_with_sep() {
   echo "$@"
   echo_sep
 }
-function log_verbose() {
-  if check_verbose; then
-    echo "$@"
+function echo_with_title_sep() {
+  echo
+  echo_with_title_sep_no_leading_blank_line "$@"
+}
+function echo_with_title_sep_no_leading_blank_line() {
+  echo "$@"
+  echo_sep
+}
+function exit_fatal() {
+  local exit_code="${1-}"
+  if test "$#" -le 1; then
+    exit_code=1
+  else
+    shift
   fi
-  return 0
+  echo "[FATAL] $*"
+  exit "$exit_code"
+}
+function return_fatal() {
+  local exit_code="${1-}"
+  if test "$#" -le 1; then
+    exit_code=1
+  else
+    shift
+  fi
+  echo "[FATAL] $*"
+  return "$exit_code"
 }
 
 #dotfiles=opts

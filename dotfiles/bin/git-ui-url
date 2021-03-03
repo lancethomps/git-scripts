@@ -5,14 +5,26 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-git_url="$(git url)"
-scm_domain="$(echo "$git_url" | pcregrep -o3 "$GIT_URL_REGEX")"
-git_current_branch="$(git current-branch)"
+browse_url_root="$(git ui-url-root "$@")"
 
-git_cwd="$(git rev-parse --show-prefix)"
-if test -n "${git_cwd-}"; then
-  git_cwd="${git_cwd::-1}"
+if test -n "${1-}" && ! git in-repo; then
+  git_url="$1"
+  shift
+  git_current_branch="master"
+  git_cwd=""
+else
+  if ! git_url="$(git url)"; then
+    git url
+    exit $?
+  fi
+  git_current_branch="$(git current-branch)"
+  git_cwd="$(git rev-parse --show-prefix)"
+  if test -n "${git_cwd-}"; then
+    git_cwd="${git_cwd::-1}"
+  fi
 fi
+
+scm_domain="$(echo "$git_url" | pcregrep -o3 "$GIT_URL_REGEX")"
 
 if test -n "${1-}"; then
   git_path="$1"
@@ -57,7 +69,6 @@ function bitbucket_url() {
   echo "${browse_url_root}/browse${suffix}"
 }
 
-browse_url_root="$(git ui-url-root)"
 if test "$scm_domain" = 'github.com'; then
   browse_url="$(github_url)"
 else

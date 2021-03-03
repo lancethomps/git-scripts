@@ -3,17 +3,9 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-mapfile -t commits < <(git rev-list --left-right "$(git outgoing-commits-revision-range)" 2> /dev/null)
+revision_range='@{upstream}'
+if ! git has-upstream; then
+  revision_range="$(git log --max-count=30 --oneline --decorate | pcregrep -o1 '^([^\s]+) \([^\)]*origin\/' | head -1)"
+fi
 
-for commit in "${commits[@]}"; do
-  case "$commit" in
-    "<"*)
-      true
-      ;;
-    *)
-      exit 0
-      ;;
-  esac
-done
-
-exit 1
+echo "${revision_range}..HEAD"

@@ -1,3 +1,11 @@
 #!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+if ! git has-outgoing-commits-files; then
+  echo "No added/copied/modified/renamed files found"
+  exit 0
+fi
 
 make check-scripts

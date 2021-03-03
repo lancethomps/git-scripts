@@ -3,17 +3,10 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-mapfile -t commits < <(git rev-list --left-right "$(git outgoing-commits-revision-range)" 2> /dev/null)
-
-for commit in "${commits[@]}"; do
-  case "$commit" in
-    "<"*)
-      true
-      ;;
-    *)
-      exit 0
-      ;;
-  esac
-done
+if test -d .git; then
+  exit 0
+elif git rev-parse --git-dir > /dev/null 2>&1; then
+  exit 0
+fi
 
 exit 1

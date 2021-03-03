@@ -3,17 +3,14 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-mapfile -t commits < <(git rev-list --left-right "$(git outgoing-commits-revision-range)" 2> /dev/null)
+if test -n "${1-}" && ! git in-repo; then
+  git_url="$1"
+  shift
+else
+  if ! git_url="$(git url)"; then
+    git url
+    exit $?
+  fi
+fi
 
-for commit in "${commits[@]}"; do
-  case "$commit" in
-    "<"*)
-      true
-      ;;
-    *)
-      exit 0
-      ;;
-  esac
-done
-
-exit 1
+echo "$git_url"

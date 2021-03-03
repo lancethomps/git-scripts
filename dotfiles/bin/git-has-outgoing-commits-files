@@ -1,19 +1,12 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
-set -o errexit -o errtrace -o nounset
+set -o errexit -o errtrace -o nounset -o pipefail
 ##################################################################################################################################################
 
-mapfile -t commits < <(git rev-list --left-right "$(git outgoing-commits-revision-range)" 2> /dev/null)
+mapfile -t outgoing_files < <(git outgoing-commits-files)
 
-for commit in "${commits[@]}"; do
-  case "$commit" in
-    "<"*)
-      true
-      ;;
-    *)
-      exit 0
-      ;;
-  esac
-done
+if test "${#outgoing_files[@]}" -eq 0; then
+  exit 1
+fi
 
-exit 1
+exit 0

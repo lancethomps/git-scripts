@@ -11,12 +11,7 @@ function join_by() {
   printf "%s" "${@/#/$d}"
 }
 
-revision_range='@{upstream}..'
-if ! git has-upstream; then
-  revision_range="$(git log --max-count=30 --oneline --decorate | pcregrep -o1 '^([^\s]+) \([^\)]*origin\/' | head -1).."
-fi
-
-mapfile -t outgoing_files < <(git log --name-only --diff-filter=ACMR --pretty=format: "$revision_range" | sed -E '/^$/d' | grep -Ev 'pom.xml$' | sort -u)
+mapfile -t outgoing_files < <(git outgoing-commits-files | grep -Ev 'pom.xml$')
 
 if test "${#outgoing_files[@]}" -ne 0; then
   includes=()

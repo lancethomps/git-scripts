@@ -123,17 +123,13 @@ function get_sep_cols() {
   fi
   echo -n "$sep_cols"
 }
-function get_terminal_sep() {
+function echo_sep() {
   if test -z "${TERMINAL_SEP:-}"; then
     local rep_count
     rep_count=$(get_sep_cols 2)
     TERMINAL_SEP="$(repeat_char '-' "$rep_count")"
     export TERMINAL_SEP
   fi
-  return 0
-}
-function echo_sep() {
-  get_terminal_sep
   echo "$TERMINAL_SEP"
 }
 function echo_with_sep() {

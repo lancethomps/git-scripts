@@ -76,7 +76,6 @@ USE_BAT_IF_AVAILABLE="${USE_BAT_IF_AVAILABLE:-false}"
 function create_fzf_args() {
   local preview_grep_args
   preview_grep_args="$(get_args_quoted "${_GREP_ARGS[@]}")"
-  get_terminal_sep
 
   if check_true "$USE_BAT_IF_AVAILABLE" && command -v bat >/dev/null 2>&1; then
     PREVIEW_FILE_COMMAND="bat --color=always --paging=always --style=numbers --pager \"less --pattern=${1}\" \"\$filename\""
@@ -98,7 +97,7 @@ function create_fzf_args() {
     --layout "reverse"
     --multi
     --header "git grep ${_GREP_ARGS[*]}"
-    --preview "filename=\$(echo {} | pcregrep -o1 '^([^:]+):([0-9]+):'); fileext=\$(echo \$filename | pcregrep -o1 '.*\\.([^.]+)$'); lineno=\$(echo {} | pcregrep -o2 '^([^:]+):([0-9]+):'); echo \"\${filename}:\${lineno}\"; echo '$TERMINAL_SEP'; ${PREVIEW_FILE_COMMAND}"
+    --preview "filename=\$(echo {} | pcregrep -o1 '^([^:]+):([0-9]+):'); fileext=\$(echo \$filename | pcregrep -o1 '.*\\.([^.]+)$'); lineno=\$(echo {} | pcregrep -o2 '^([^:]+):([0-9]+):'); echo \"\${filename}:\${lineno}\"; echo '$(echo_sep)'; ${PREVIEW_FILE_COMMAND}"
     --preview-window 'down:wrap:hidden'
     --bind '?:toggle-preview'
   )

@@ -63,20 +63,19 @@ done
 ##################################################################################################################################################
 
 use_git_pager_if_set
-get_terminal_sep
 
 output=$(
   cat <<EOF
 COMMITS PER USER
-${TERMINAL_SEP}
+$(echo_sep)
 $(git count-commits)
 
 COMMITS PER YEAR
-${TERMINAL_SEP}
+$(echo_sep)
 $(git count-commits-per-year)
 
 COMMITS PER MONTH
-${TERMINAL_SEP}
+$(echo_sep)
 $(git count-commits-per-month)
 EOF
 )

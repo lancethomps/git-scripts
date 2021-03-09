@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+if ! git has-outgoing-commits-files; then
+  echo "No added/copied/modified/renamed files found"
+  exit 0
+fi
+
+script_dir="$(dirname "$0")"
+blacklist_file="${script_dir}/grep-blacklist.txt"
+
+if ! test -s "$blacklist_file"; then
+  echo "[WARN] No blacklisted patterns found at ${blacklist_file}"
+  exit 0
+fi
+
+function join_by() {
+  local d="$1"
+  shift
+  echo -n "$1"
+  shift
+  printf "%s" "${@/#/$d}"
+}
+
+mapfile -t blacklisted_patterns < <(grep -Ev "^\s*#" "$blacklist_file")
+blacklist_pattern="($(join_by "|" "${blacklisted_patterns[@]}"))"
+
+if git grep -q "$blacklist_pattern"; then
+  echo "[ERROR] Blacklisted patterns found, details below. git grep pattern: $blacklist_pattern"
+  git --no-pager grep "$blacklist_pattern"
+  exit 1
+fi
+
+exit 0

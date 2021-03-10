@@ -11,6 +11,7 @@ if test -n "${1-}" && ! git in-repo; then
   git_url="$1"
   shift
   git_current_branch="master"
+  git_default_branch="master"
   git_cwd=""
 else
   if ! git_url="$(git url)"; then
@@ -19,8 +20,10 @@ else
   fi
   if check_true "${ignore_branch-}"; then
     git_current_branch="master"
+    git_default_branch="master"
   else
     git_current_branch="$(git current-branch)"
+    git_default_branch="$(git default-branch)"
   fi
   git_cwd="$(git rev-parse --show-prefix)"
   if test -n "${git_cwd-}"; then
@@ -50,7 +53,7 @@ function github_url() {
       suffix="${suffix}/tree"
     fi
     suffix="${suffix}/${git_current_branch}/${git_path}"
-  elif test "$git_current_branch" != master; then
+  elif test "$git_current_branch" != "$git_default_branch"; then
     suffix="${suffix}/tree/${git_current_branch}"
   fi
   if test -n "${git_line-}"; then
@@ -64,7 +67,7 @@ function bitbucket_url() {
   if test -n "${git_path-}"; then
     suffix="${suffix}/${git_path}"
   fi
-  if test "$git_current_branch" != master; then
+  if test "$git_current_branch" != "$git_default_branch"; then
     suffix="${suffix}?at=refs/heads/${git_current_branch}"
   fi
   if test -n "${git_line-}"; then

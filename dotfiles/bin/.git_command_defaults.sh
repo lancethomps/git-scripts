@@ -6,15 +6,6 @@ set -o errexit -o errtrace -o nounset
 # shellcheck source=bin/.git_scripts_common_copy.sh
 source "$_SCRIPT_DIR/.git_scripts_common_copy.sh"
 
-function export_if_missing() {
-  if test -z "${1:-}"; then
-    local val="${3//\"/\\\"}"
-    eval "export $2=\"${val}\""
-    return $?
-  fi
-  return 0
-}
-
 function use_git_pager_if_set() {
   local gitpager
   if gitpager="$(git config core.pager)"; then
@@ -23,8 +14,17 @@ function use_git_pager_if_set() {
   return 0
 }
 
-export_if_missing "${GIT_BRANCH_SKIP_REGEX:-}" GIT_BRANCH_SKIP_REGEX '[[:space:]]((origin/)?(master|mature|HEAD|develop)$|origin/pr/)'
-export_if_missing "${GIT_BRANCH_TARGET:-}" GIT_BRANCH_TARGET 'master'
+function set_git_branch_target_if_missing() {
+  if test -z "${GIT_BRANCH_TARGET-}"; then
+    GIT_BRANCH_TARGET="$(git default-branch)"
+    export GIT_BRANCH_TARGET
+  fi
+  return 0
+}
+
+if test -z "${GIT_BRANCH_SKIP_REGEX-}"; then
+  export GIT_BRANCH_SKIP_REGEX='[[:space:]]((origin/)?(master|main|mature|HEAD|develop)$|origin/pr/)'
+fi
 
 GIT_BRANCH_REF_FORMATS=(
   '%(align:50)%(committerdate:format:%Y-%m-%d %H:%M:%S) (%(color:green)%(committerdate:relative)%(color:reset))%(end)'

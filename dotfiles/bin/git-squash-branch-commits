@@ -4,8 +4,11 @@ set -o errexit -o errtrace
 ##################################################################################################################################################
 
 curr_branch="$(git current-branch)"
+default_branch="$(git default-branch)"
 
-git reset "$(git merge-base "$curr_branch" origin/master)"
+merge_base="$(git merge-base "${curr_branch}" "origin/${default_branch}")"
+
+git reset "${merge_base}"
 git status
 git add --all
 git commit

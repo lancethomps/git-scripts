@@ -23,8 +23,8 @@ else
   git push --delete origin "${BRANCH_NAME}"
 fi
 
-if test "$CURRENT_BRANCH_NAME" = "${BRANCH_NAME}"; then
-  git checkout master
+if test "${CURRENT_BRANCH_NAME}" = "${BRANCH_NAME}"; then
+  git checkout "$(git default-branch)"
 fi
 
 if ! git branch -d "${BRANCH_NAME}"; then

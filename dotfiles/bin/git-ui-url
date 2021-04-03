@@ -10,8 +10,8 @@ browse_url_root="$(git ui-url-root "$@")"
 if test -n "${1-}" && ! git in-repo; then
   git_url="$1"
   shift
-  git_current_branch="master"
-  git_default_branch="master"
+  git_current_branch="main"
+  git_default_branch="main"
   git_cwd=""
 else
   if ! git_url="$(git url)"; then
@@ -19,8 +19,8 @@ else
     exit $?
   fi
   if check_true "${ignore_branch-}"; then
-    git_current_branch="master"
-    git_default_branch="master"
+    git_current_branch="main"
+    git_default_branch="main"
   else
     git_current_branch="$(git current-branch)"
     git_default_branch="$(git default-branch)"

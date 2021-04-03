@@ -10,4 +10,6 @@ if test -z "$1"; then
   exit 1
 fi
 
+set_git_branch_target_if_missing
+
 git branches-older "$@" --merged "${GIT_BRANCH_TARGET}"

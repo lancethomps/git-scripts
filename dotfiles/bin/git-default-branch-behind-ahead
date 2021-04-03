@@ -1,19 +1,7 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
-set -o errexit -o errtrace
+set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-if git is-detached || test "$(git current-branch)" = 'master'; then
-  exit 1
-fi
-
 git fetch &>/dev/null
-if ! behind="$(git rev-list --left-only --count origin/master...)"; then
-  exit 2
-fi
-
-if test "$behind" -ne 0; then
-  exit 0
-else
-  exit 1
-fi
+git rev-list --left-right --count "origin/$(git default-branch)..."

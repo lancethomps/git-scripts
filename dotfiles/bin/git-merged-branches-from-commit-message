@@ -7,12 +7,14 @@ if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR
 
 git_log_args=("$@")
 
-if [[ " $* " != *' -n '* ]] && [[ " $* " != *' --max-count'* ]]; then
+if [[ " $* " != *" -n "* ]] && [[ " $* " != *" --max-count"* ]]; then
   git_log_args+=(-n 1000)
 fi
 
+default_branch="$(git default-branch)"
+
 mapfile -t merged_branches < <(git log --pretty=oneline --grep='^Merge pull request' "${git_log_args[@]}" |
-  pcregrep -o1 'Merge pull request #\d+ in [^ ]+ from ([^ ]+) to master' |
+  pcregrep -o1 'Merge pull request #\d+ in [^ ]+ from ([^ ]+) to '"(master|main|${default_branch})" |
   sed -E 's/^/origin\//g' |
   xargs git branch --list --all |
   sed -E 's/^ *//g' |

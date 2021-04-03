@@ -5,4 +5,6 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
+set_git_branch_target_if_missing
+
 git branches-info refs/remotes --color=always --merged="${GIT_BRANCH_TARGET}" "$@" | grep -v -E "$GIT_BRANCH_SKIP_REGEX"

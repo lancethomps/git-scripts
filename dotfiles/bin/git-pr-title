@@ -9,7 +9,7 @@ if test -z "${PR_TO_REF:-}"; then
     PR_TO_REF="$1"
     shift
   else
-    PR_TO_REF="master"
+    PR_TO_REF="$(git default-branch)"
   fi
 fi
 git_current_branch="$(git current-branch)"

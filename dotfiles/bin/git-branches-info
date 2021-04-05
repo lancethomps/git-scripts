@@ -6,7 +6,7 @@ if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR
 ##################################################################################################################################################
 
 branch_args=''
-if test -z "${1:-}" && check_not_true "${NO_BRANCHES_INFO_BRANCH_ARGS:-}"; then
+if test -z "${1-}" && check_not_true "${NO_BRANCHES_INFO_BRANCH_ARGS:-}"; then
   branch_args='refs/remotes/origin/'
 fi
 

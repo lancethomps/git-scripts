@@ -5,9 +5,23 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
+if test "${1-}" = "--mine"; then
+  mine=true
+  shift
+fi
+
 git fetch
 GIT_CURRENT_BRANCH="$(git current-branch)"
-GIT_BRANCH="$(git branches-info refs/remotes/origin/ --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g' | fzf --ansi --no-sort --layout "reverse" --header "Current branch: ${GIT_CURRENT_BRANCH}" | pcregrep -o1 '\t([^\t]+)$')"
+
+function get_branches() {
+  if test "${mine-}" = "true"; then
+    git branches-info refs/remotes/origin/ --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g' | grep "$(git config user.name)"
+  else
+    git branches-info refs/remotes/origin/ --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g'
+  fi
+}
+
+GIT_BRANCH="$(get_branches | fzf --ansi --no-sort --layout "reverse" --header "Current branch: ${GIT_CURRENT_BRANCH}" | pcregrep -o1 '\t([^\t]+)$')"
 
 if check_debug; then
   echo "DEBUG: git checkout ${GIT_BRANCH}"

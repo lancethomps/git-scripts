@@ -22,6 +22,16 @@ function set_git_branch_target_if_missing() {
   return 0
 }
 
+function urlencode_git_current_branch() {
+  local current_branch
+  if test -n "${1-}"; then
+    current_branch="$1"
+  else
+    current_branch="$(git current-branch)"
+  fi
+  url_encode_py "${current_branch}" "/"
+}
+
 if test -z "${GIT_BRANCH_SKIP_REGEX-}"; then
   export GIT_BRANCH_SKIP_REGEX='[[:space:]]((origin/)?(master|main|mature|HEAD|develop)$|origin/pr/)'
 fi

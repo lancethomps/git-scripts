@@ -8,13 +8,14 @@ if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR
 git_url="$(git url)"
 scm_domain="$(echo "$git_url" | pcregrep -o3 "$GIT_URL_REGEX")"
 git_current_branch="$(git current-branch)"
+git_current_branch_url="$(urlencode_git_current_branch "$git_current_branch")"
 
 function github_url() {
-  echo "${browse_url_root}/pull/new/${git_current_branch}"
+  echo "${browse_url_root}/pull/new/${git_current_branch_url}"
 }
 
 function bitbucket_url() {
-  echo "${browse_url_root}/compare/commits?sourceBranch=refs/heads/${git_current_branch}"
+  echo "${browse_url_root}/compare/commits?sourceBranch=refs/heads/${git_current_branch_url}"
 }
 
 browse_url_root="$(git ui-url-root)"

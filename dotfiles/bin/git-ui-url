@@ -31,6 +31,7 @@ else
   fi
 fi
 
+git_current_branch_url="$(urlencode_git_current_branch "$git_current_branch")"
 scm_domain="$(echo "$git_url" | pcregrep -o3 "$GIT_URL_REGEX")"
 
 if test -n "${1-}"; then
@@ -52,9 +53,9 @@ function github_url() {
     else
       suffix="${suffix}/tree"
     fi
-    suffix="${suffix}/${git_current_branch}/${git_path}"
+    suffix="${suffix}/${git_current_branch_url}/${git_path}"
   elif test "$git_current_branch" != "$git_default_branch"; then
-    suffix="${suffix}/tree/${git_current_branch}"
+    suffix="${suffix}/tree/${git_current_branch_url}"
   fi
   if test -n "${git_line-}"; then
     suffix="${suffix}#L${git_line}"
@@ -68,7 +69,7 @@ function bitbucket_url() {
     suffix="${suffix}/${git_path}"
   fi
   if test "$git_current_branch" != "$git_default_branch"; then
-    suffix="${suffix}?at=refs/heads/${git_current_branch}"
+    suffix="${suffix}?at=refs/heads/${git_current_branch_url}"
   fi
   if test -n "${git_line-}"; then
     suffix="${suffix}#${git_line}"

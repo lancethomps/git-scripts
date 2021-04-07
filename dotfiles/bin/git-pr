@@ -13,9 +13,9 @@ function _usage() {
   _SCRIPT_NAME_GIT="${_SCRIPT_NAME/git-/git }"
 
   local SYNOP_INDENT
-  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME_GIT}" | wc -c)" < /dev/zero | tr '\0' " ")"
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME_GIT}" | wc -c)" </dev/zero | tr '\0' " ")"
 
-  cat << EOF
+  cat <<EOF
 NAME
        ${_SCRIPT_NAME}
 
@@ -80,7 +80,7 @@ function github_url() {
   query_params+=("title=$(git pr-title --urlencode)")
 
   if ! check_true "${no_body-}"; then
-    if command -v git-pr-description-custom > /dev/null 2>&1; then
+    if command -v git-pr-description-custom >/dev/null 2>&1; then
       query_params+=("body=$(git pr-description-custom --urlencode)")
     else
       query_params+=("body=$(url_encode_py "$(git pr-description)")")

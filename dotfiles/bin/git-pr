@@ -5,13 +5,89 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local _SCRIPT_NAME_GIT
+  _SCRIPT_NAME_GIT="${_SCRIPT_NAME/git-/git }"
+
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME_GIT}" | wc -c)" < /dev/zero | tr '\0' " ")"
+
+  cat << EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME_GIT} [--no-body] [--simple]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+
+EXAMPLES
+       ${_SCRIPT_NAME_GIT}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --no-body)
+      no_body=true
+      shift
+      ;;
+    --simple)
+      simple=true
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+##################################################################################################################################################
+
 git_url="$(git url)"
 scm_domain="$(echo "$git_url" | pcregrep -o3 "$GIT_URL_REGEX")"
 git_current_branch="$(git current-branch)"
 git_current_branch_url="$(urlencode_git_current_branch "$git_current_branch")"
 
 function github_url() {
-  echo "${browse_url_root}/pull/new/${git_current_branch_url}"
+  local url_base query_params=()
+
+  if test "${simple-}" = "true"; then
+    echo "${browse_url_root}/pull/new/${git_current_branch_url}"
+    return 0
+  fi
+
+  url_base="${browse_url_root}/compare/$(git default-branch)...${git_current_branch_url}"
+  query_params+=("title=$(git pr-title --urlencode)")
+
+  if ! check_true "${no_body-}"; then
+    if command -v git-pr-description-custom > /dev/null 2>&1; then
+      query_params+=("body=$(git pr-description-custom --urlencode)")
+    else
+      query_params+=("body=$(url_encode_py "$(git pr-description)")")
+    fi
+  fi
+
+  echo "${url_base}?quick_pull=1&$(join_by "&" "${query_params[@]}")"
 }
 
 function bitbucket_url() {

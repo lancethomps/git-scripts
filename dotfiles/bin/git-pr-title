@@ -1,17 +1,53 @@
-#!/usr/bin/env bash
-################################################################### SETUP ########################################################################
-set -o errexit -o errtrace -o nounset
-##################################################################################################################################################
-BRANCH_REGEX='^([A-Z]{2,10}-[0-9]{1,10})?(.*)'
+#!/usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
 
-if test -z "${PR_TO_REF:-}"; then
-  if test -n "${1:-}" && [[ $1 != '-'* ]]; then
-    PR_TO_REF="$1"
-    shift
-  else
-    PR_TO_REF="$(git default-branch)"
-  fi
-fi
-git_current_branch="$(git current-branch)"
+import argparse
+import os
 
-echo "$(echo "$git_current_branch" | pcregrep -o1 "$BRANCH_REGEX")$(echo "$git_current_branch" | pcregrep -o2 "$BRANCH_REGEX" | sed -E 's/[_-]/ /g')"
+from ltpylib import opts, procs
+from ltpylib.strconverters import url_encode
+
+
+class ScriptArgs(opts.BaseArgs):
+
+  def __init__(self, args: argparse.Namespace):
+    super().__init__(args)
+
+    self.to_ref: str = args.to_ref if args.to_ref else os.getenv("PR_TO_REF")
+    self.urlencode: bool = args.urlencode
+
+    if not self.to_ref:
+      self.to_ref = run_git_command("default-branch")
+
+
+def main():
+  args = _parse_args()
+  current_branch = run_git_command("current-branch")
+  output = current_branch
+
+  if args.urlencode:
+    output = url_encode(output)
+
+  print(output)
+
+
+def run_git_command(*git_args) -> str:
+  git_command = ["git"]
+  git_command.extend(git_args)
+  return procs.run_and_parse_output(git_command, check=True)[1].strip()
+
+
+def _parse_args() -> ScriptArgs:
+  arg_parser = opts.create_default_arg_parser()
+
+  arg_parser.add_argument("--to-ref")
+  arg_parser.add_argument("--urlencode", action=argparse.BooleanOptionalAction)
+
+  return ScriptArgs(opts.parse_args_and_init_others(arg_parser))
+
+
+if __name__ == '__main__':
+  try:
+    main()
+  except KeyboardInterrupt:
+    exit(130)

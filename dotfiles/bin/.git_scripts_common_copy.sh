@@ -264,5 +264,13 @@ function join_by() {
 
 #dotfiles=web
 function url_encode_py() {
-  python -c 'import urllib.parse as urllib_parse, sys; print(urllib_parse.quote_plus(sys.argv[1], safe=(sys.argv[2] if len(sys.argv) > 2 else "/")))' "$@"
+  python -c '
+import sys
+try:
+  import urllib.parse as urllib_parse
+except:
+  import urllib as urllib_parse
+
+print(urllib_parse.quote_plus(sys.argv[1], safe=(sys.argv[2] if len(sys.argv) > 2 else "/")))
+' "$@"
 }

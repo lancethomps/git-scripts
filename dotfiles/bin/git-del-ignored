@@ -5,8 +5,27 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-git clean -Xd --force --dry-run "$@"
+if test "${1-}" = "--all"; then
+  all=true
+  shift
+fi
+
+git_clean_args=(
+  -Xd
+  --force
+  "$@"
+)
+
+if test "${all-}" != "true"; then
+  git_clean_args+=(
+    --
+    ':(exclude)*.iml'
+    ':(exclude).idea'
+  )
+fi
+
+git clean --dry-run "${git_clean_args[@]}"
 
 if confirm_with_auto 'Delete ignored files?'; then
-  git clean -Xd --force "$@"
+  git clean "${git_clean_args[@]}"
 fi

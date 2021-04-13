@@ -18,13 +18,16 @@ git_clean_args=(
 
 if test "${all-}" != "true"; then
   git_clean_args+=(
-    --
-    ':(exclude)*.iml'
-    ':(exclude).idea'
+    --exclude='!**/local_settings.py'
+    --exclude='!*.iml'
+    --exclude='!.env'
+    --exclude='!.idea'
+    --exclude='!venv'
   )
 fi
 
 git clean --dry-run "${git_clean_args[@]}"
+log_verbose git clean "${git_clean_args[@]}"
 
 if confirm_with_auto 'Delete ignored files?'; then
   git clean "${git_clean_args[@]}"

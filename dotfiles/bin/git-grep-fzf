@@ -96,10 +96,11 @@ function create_fzf_args() {
     # --no-mouse
     --layout "reverse"
     --multi
-    --header "git grep ${_GREP_ARGS[*]}"
+    --header "use right arrow to open in idea | git grep ${_GREP_ARGS[*]}"
     --preview "filename=\$(echo {} | pcregrep -o1 '^([^:]+):([0-9]+):'); fileext=\$(echo \$filename | pcregrep -o1 '.*\\.([^.]+)$'); lineno=\$(echo {} | pcregrep -o2 '^([^:]+):([0-9]+):'); echo \"\${filename}:\${lineno}\"; echo '$(echo_sep)'; ${PREVIEW_FILE_COMMAND}"
     --preview-window 'down:wrap:hidden'
     --bind '?:toggle-preview'
+    --bind 'right:execute-silent(open_grepped_lines {})'
   )
   export _FZF_ARGS
 }

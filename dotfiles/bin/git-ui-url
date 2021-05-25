@@ -40,6 +40,9 @@ if test -n "${1-}"; then
   if ! test -e "${git_repo_root}/${git_path}" && test -e "${git_repo_root}/${git_cwd}/${git_path}"; then
     git_path="${git_cwd}/${git_path}"
   fi
+  if ! test -e "${git_path}" && ! test -e "${git_repo_root}/${git_path}" && test "${1}" = "$(basename "${git_repo_root}")"; then
+    git_path="${git_cwd}"
+  fi
 else
   git_path="${git_cwd}"
 fi

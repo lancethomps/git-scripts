@@ -16,7 +16,9 @@ function get_url_jenkins() {
   get_job_url_from_repo
 }
 
-if test -e ".travis.yml"; then
+if test -e "Jenkinsfile"; then
+  job_url="$(get_url_jenkins)"
+elif test -e ".travis.yml"; then
   job_url="$(get_url_travis)"
 else
   job_url="$(get_url_jenkins)"

@@ -34,9 +34,9 @@ fi
 git_current_branch_url="$(urlencode_git_current_branch "$git_current_branch")"
 scm_domain="$(echo "$git_url" | pcregrep -o3 "$GIT_URL_REGEX")"
 
+git_repo_root="$(git rev-parse --show-toplevel)"
 if test -n "${1-}"; then
   git_path="$1"
-  git_repo_root="$(git rev-parse --show-toplevel)"
   if ! test -e "${git_repo_root}/${git_path}" && test -e "${git_repo_root}/${git_cwd}/${git_path}"; then
     git_path="${git_cwd}/${git_path}"
   fi
@@ -51,7 +51,7 @@ git_line="${2-}"
 function github_url() {
   suffix=''
   if test -n "${git_path-}"; then
-    if test -f "$git_path"; then
+    if test -f "${git_repo_root}/${git_path}"; then
       suffix="${suffix}/blob"
     else
       suffix="${suffix}/tree"

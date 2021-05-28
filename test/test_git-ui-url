@@ -8,12 +8,12 @@ export exit_val=0
 
 cd "${_SCRIPT_DIR}/.." || exit 1
 expected="https://github.com/lancethomps/git-scripts"
-actual="$(ignore_branch=true git-ui-url)"
+actual="$(ignore_branch=true git-ui-url 2>&1 || true)"
 assert_equal "$expected" "$actual" "git-ui-url this repo"
 
 cd "${TMP:-/tmp}" || exit 1
 expected="https://github.com/lancethomps/ltpylib"
-actual="$(git-ui-url "git@github.com:lancethomps/ltpylib.git")"
+actual="$(git-ui-url "git@github.com:lancethomps/ltpylib.git" 2>&1 || true)"
 assert_equal "$expected" "$actual" "git-ui-url other repo"
 cd "${_SCRIPT_DIR}/.." || exit 1
 

@@ -5,31 +5,16 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-if test "${1-}" = "--all"; then
-  all=true
-  shift
-fi
-
 git_clean_args=(
-  -Xd
+  -d
   --force
   "$@"
 )
 
-if test "${all-}" != "true"; then
-  git_clean_args+=(
-    --exclude='!**/local_settings.py'
-    --exclude='!*.iml'
-    --exclude='!.env'
-    --exclude='!.idea'
-    --exclude='!venv'
-  )
-fi
-
 git clean --dry-run "${git_clean_args[@]}"
 echo_sep
-log_verbose git clean "${git_clean_args[@]}"
 
-if confirm_with_auto 'Delete above ignored files?'; then
-  git clean "${git_clean_args[@]}"
+if confirm_with_auto 'Trash (trash -Fv) above untracked files?'; then
+  mapfile -t trash_files < <(git clean --dry-run "${git_clean_args[@]}" | sed -E 's/^Would remove //')
+  trash -Fv "${trash_files[@]}"
 fi

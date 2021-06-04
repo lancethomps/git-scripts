@@ -11,6 +11,6 @@ source "$DOTFILES/.jenkins_script_setup.sh"
 job_url="$(get_job_url_from_repo)"
 
 api_url="${job_url}/api/json"
-last_build_url="$(curl --silent "$api_url" | jq --raw-output '.lastBuild.url')"
+last_build_url="$(curl --user "$(get_jenkins_basic_auth)" --silent "$api_url" | jq --raw-output '.lastBuild.url')"
 
 echo "$last_build_url"

@@ -23,6 +23,9 @@ if test "${all-}" != "true"; then
     --exclude='!.env'
     --exclude='!.idea'
     --exclude='!venv'
+    --exclude='!Procfile.me'
+    --exclude='!spec/local_test_spec.rb'
+    --exclude='!config/initializers/local_overrides.rb'
   )
 fi
 

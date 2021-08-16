@@ -5,5 +5,19 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-GIT_BRANCH="$("${_SCRIPT_DIR}/git-select-branch")"
-"${_SCRIPT_DIR}/git-diff-to-branch" "${GIT_BRANCH}" "$@"
+if test "${1-}" = "--mine"; then
+  mine=true
+  shift
+fi
+
+GIT_CURRENT_BRANCH="$(git current-branch)"
+
+function get_branches() {
+  if test "${mine-}" = "true"; then
+    git branches-info refs/remotes/origin/ --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g' | grep "$(git config user.name)"
+  else
+    git branches-info refs/remotes/origin/ --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g'
+  fi
+}
+
+get_branches | fzf --ansi --no-sort --layout "reverse" --header "Current branch: ${GIT_CURRENT_BRANCH}" | pcregrep -o1 '\t([^\t]+)$'

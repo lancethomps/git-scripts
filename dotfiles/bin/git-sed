@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
 if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
-# shellcheck source=bin/.git_command_defaults.sh disable=SC2016
-if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
+# shellcheck source=./.git_command_defaults.sh
+source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
 # reset environment variables that could interfere with normal usage

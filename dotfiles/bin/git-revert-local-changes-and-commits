@@ -5,15 +5,7 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
-states="${1:-DECLINED,MERGED,OPEN}"
-
-bb_project="$(git ui-url-project)"
-bb_repo="$(git ui-url-repo)"
-
-bb_merged_branches="$(wf_stash_py_api repo_branches_with_pr_in_states "$bb_project" "$bb_repo" "$states" -1 | jq --raw-output '.values[].displayId')"
-
-if test -z "$bb_merged_branches"; then
-  exit 1
-fi
-
-echo "$bb_merged_branches"
+git fetch
+git reset --hard "origin/$(git current-branch)"
+git checkout .
+git del-untracked --auto-confirm

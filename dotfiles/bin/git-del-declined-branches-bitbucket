@@ -5,7 +5,23 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-git declined-branches-bitbucket "$@"
+################################################################# FILTERARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    --auto-confirm)
+      auto_confirm=true
+      shift
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+git declined-branches-bitbucket "${PASSTHROUGH_ARGS[@]}"
 
 if confirm_with_auto 'Delete remote branches?'; then
   git_push_args='--delete'
@@ -16,12 +32,12 @@ if confirm_with_auto 'Delete remote branches?'; then
   branches_to_skip="$(ask_user_for_input "How many branches should be skipped? Empty for none." true)"
   if test -n "${branches_to_skip-}"; then
     branches_to_skip="$((branches_to_skip + 1))"
-    git declined-branches-bitbucket "$@" | tail +"${branches_to_skip:-0}"
+    git declined-branches-bitbucket "${PASSTHROUGH_ARGS[@]}" | tail +"${branches_to_skip:-0}"
     if ! confirm_with_auto 'Continue with deletion?'; then
       exit 1
     fi
   fi
 
   # shellcheck disable=SC2086
-  git declined-branches-bitbucket "$@" | tail +"${branches_to_skip:-0}" | awk -F $'\t' '{ print $4 }' | sed "s/origin\///" | xargs -n 1 git push ${git_push_args} origin
+  git declined-branches-bitbucket "${PASSTHROUGH_ARGS[@]}" | tail +"${branches_to_skip:-0}" | awk -F $'\t' '{ print $4 }' | sed "s/origin\///" | xargs -n 1 git push ${git_push_args} origin
 fi

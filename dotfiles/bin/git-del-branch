@@ -5,15 +5,31 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
+################################################################# FILTERARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    --auto-confirm)
+      auto_confirm=true
+      shift
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
 CURRENT_BRANCH_NAME="$(git current-branch)"
-BRANCH_NAME="${1:-$CURRENT_BRANCH_NAME}"
+BRANCH_NAME="${PASSTHROUGH_ARGS[0]:-$CURRENT_BRANCH_NAME}"
 
 if echo " ${BRANCH_NAME}" | pcregrep --quiet "$GIT_BRANCH_SKIP_REGEX"; then
   echo "Cannot delete branch '${BRANCH_NAME}' because it matched the GIT_BRANCH_SKIP_REGEX: ${GIT_BRANCH_SKIP_REGEX}"
   exit 1
 fi
 
-if test -z "${1:-}" && ! confirm_with_auto "Delete local and remote branch '${BRANCH_NAME}'?"; then
+if test -z "${PASSTHROUGH_ARGS[0]:-}" && ! confirm_with_auto "Delete local and remote branch '${BRANCH_NAME}'?"; then
   exit 1
 fi
 

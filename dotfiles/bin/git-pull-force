@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
 if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
-# shellcheck source=bin/.git_command_defaults.sh disable=SC2016
-if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
+# shellcheck source=./.git_command_defaults.sh
+source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
 ################################################################# FILTERARGS #####################################################################
@@ -21,19 +21,11 @@ while test $# -gt 0; do
 done
 ##################################################################################################################################################
 
-mapfile -t FOUND_FILES < <(git grep --name-only "${PASSTHROUGH_ARGS[@]}")
-
-if test "${#FOUND_FILES[@]}" -eq 0; then
-  exit 1
+if ! git has-incoming-commits || ! git has-outgoing-commits; then
+  if ! confirm_with_auto "Incoming or outgoing commits not found and this will run 'git revert-local-changes-and-commits', are you sure you want to continue?"; then
+    exit 1
+  fi
 fi
 
-echo 'Matching Files
-'"$(echo_sep)"'
-'"$(join_by_newline "${FOUND_FILES[@]}")"'
-'
-
-if confirm_with_auto "Open files in IntelliJ?"; then
-  idea "${FOUND_FILES[@]}"
-else
-  exit 1
-fi
+git revert-local-changes-and-commits
+git pull

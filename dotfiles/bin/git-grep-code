@@ -5,7 +5,23 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 if test -e "${_SCRIPT_DIR}/.git_command_defaults.sh"; then source "${_SCRIPT_DIR}/.git_command_defaults.sh"; else echo '"${_SCRIPT_DIR}/.git_command_defaults.sh" does not exist - resolved to: '"${_SCRIPT_DIR}/.git_command_defaults.sh" && exit 1; fi
 ##################################################################################################################################################
 
-mapfile -t FOUND_FILES < <(git grep --name-only "$@")
+################################################################# FILTERARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    --auto-confirm)
+      auto_confirm=true
+      shift
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+mapfile -t FOUND_FILES < <(git grep --name-only "${PASSTHROUGH_ARGS[@]}")
 
 if test "${#FOUND_FILES[@]}" -eq 0; then
   exit 1

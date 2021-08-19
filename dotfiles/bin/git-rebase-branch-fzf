@@ -11,13 +11,7 @@ if test -z "${GIT_BRANCH-}"; then
   echo "ERROR no GIT_BRANCH selected"
   exit 1
 elif check_debug; then
-  echo "DEBUG git checkout ${GIT_BRANCH}"
+  echo "DEBUG git rebase origin/${GIT_BRANCH}"
 else
-  git checkout "${GIT_BRANCH}"
-fi
-
-if check_not_debug && check_not_false "${SKIP_PULL-}"; then
-  git pull
-else
-  exit 0
+  git rebase "origin/${GIT_BRANCH}"
 fi

@@ -6,6 +6,10 @@ source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
 GIT_CURRENT_BRANCH="$(git current-branch)"
+_GIT_ARGS=(
+  "$@"
+  --name-only
+)
 _FZF_ARGS=(
   --ansi
   --no-sort
@@ -16,9 +20,9 @@ _FZF_ARGS=(
 )
 
 if command -v ask_to_open_grepped_lines >/dev/null 2>&1; then
-  results="$(git diff-to-default --name-only "$@" | fzf "${_FZF_ARGS[@]}")"
+  results="$(git diff-to-branch "${_GIT_ARGS[@]}" | fzf "${_FZF_ARGS[@]}")"
   results_exit_code="$?"
   ask_to_open_grepped_lines --lines-exit-code "$results_exit_code" "$results"
 else
-  git diff-to-default --name-only "$@" | fzf "${_FZF_ARGS[@]}"
+  git diff-to-branch "${_GIT_ARGS[@]}" | fzf "${_FZF_ARGS[@]}"
 fi

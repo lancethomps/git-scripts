@@ -24,6 +24,9 @@ else
   else
     git_current_branch="$(git current-branch)"
     git_default_branch="$(git default-branch)"
+    if check_true "${use_default_branch-}"; then
+      git_current_branch="${git_default_branch}"
+    fi
   fi
   git_cwd="$(git rev-parse --show-prefix)"
   if test -n "${git_cwd-}"; then

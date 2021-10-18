@@ -56,4 +56,4 @@ export GIT_BRANCH_REF_FORMAT
 export GIT_TAG_REF_FORMAT
 
 export GIT_BRANCH_SKIP_SIZE_DEFAULT=10
-export GIT_URL_REGEX='(?i)^(?:(https|ssh|git\+ssh):\/\/)?([^@\/]+@)?([^\/:]+)(:[0-9]+)?(?:\/|:)(scm\/)?([^\/]+)\/([^\/]+)\.git(#[^\n]*)?$'
+export GIT_URL_REGEX='(?i)^(?:(https|ssh|git\+ssh):\/\/)?([^@\/]+@)?([^\/:]+)(:[0-9]+)?(?:\/|:)(scm\/)?([^\/]+)\/([^\/]+?)(?:\.git)?(#[^\n]*)?$'

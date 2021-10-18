@@ -15,6 +15,10 @@ function github_url() {
   echo "https://${scm_domain}/${scm_project}/${git_repo_name}"
 }
 
+function sourcehut_url() {
+  echo "https://${scm_domain}/${scm_project}/${git_repo_name}"
+}
+
 function bitbucket_url() {
   if [[ $scm_project == '~'* ]]; then
     project_path="users/${scm_project#~*}"
@@ -26,6 +30,8 @@ function bitbucket_url() {
 
 if test "$scm_domain" = 'github.com'; then
   browse_url="$(github_url)"
+elif test "$scm_domain" = 'git.sr.ht'; then
+  browse_url="$(sourcehut_url)"
 else
   browse_url="$(bitbucket_url)"
 fi

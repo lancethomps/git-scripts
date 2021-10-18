@@ -69,6 +69,20 @@ function github_url() {
   echo "${browse_url_root}${suffix}"
 }
 
+function sourcehut_url() {
+  suffix=''
+  if test -n "${git_path-}"; then
+    suffix="${suffix}/tree"
+    suffix="${suffix}/${git_current_branch_url}/item/${git_path}"
+  elif test "$git_current_branch" != "$git_default_branch"; then
+    suffix="${suffix}/tree/${git_current_branch_url}"
+  fi
+  if test -n "${git_line-}"; then
+    suffix="${suffix}#L${git_line}"
+  fi
+  echo "${browse_url_root}${suffix}"
+}
+
 function bitbucket_url() {
   suffix=''
   if test -n "${git_path-}"; then
@@ -85,6 +99,8 @@ function bitbucket_url() {
 
 if test "$scm_domain" = 'github.com'; then
   browse_url="$(github_url)"
+elif test "$scm_domain" = 'git.sr.ht'; then
+  browse_url="$(sourcehut_url)"
 else
   browse_url="$(bitbucket_url)"
 fi

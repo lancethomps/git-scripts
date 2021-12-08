@@ -10,19 +10,24 @@ _GIT_ARGS=(
   "$@"
   --name-only
 )
-_FZF_ARGS=(
-  --ansi
-  --no-sort
-  --layout "reverse"
-  --multi
-  --header "use right arrow to open in idea | current branch: ${GIT_CURRENT_BRANCH}"
-  --bind 'right:execute-silent(open_grepped_lines --no-line-numbers {})'
-)
+  
+function create_open_grepped_lines_args() {
+  open_grepped_lines_args=(
+    --ask
+    --no-line-numbers
+    --select-lines
+    --select-header "use right arrow to open in idea | current branch: ${GIT_CURRENT_BRANCH}"
+  )
+  export open_grepped_lines_args
+}
 
-if command -v ask_to_open_grepped_lines >/dev/null 2>&1; then
-  results="$(git diff-to-branch "${_GIT_ARGS[@]}" | fzf "${_FZF_ARGS[@]}")"
-  results_exit_code="$?"
-  ask_to_open_grepped_lines --lines-exit-code "$results_exit_code" "$results"
+function run_no_pager() {
+  git diff-to-branch "${_GIT_ARGS[@]}"
+}
+
+if command -v open_grepped_lines >/dev/null 2>&1; then
+  create_open_grepped_lines_args
+  run_no_pager | open_grepped_lines "${open_grepped_lines_args[@]}" -
 else
-  git diff-to-branch "${_GIT_ARGS[@]}" | fzf "${_FZF_ARGS[@]}"
+  run_no_pager
 fi

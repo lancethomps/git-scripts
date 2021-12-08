@@ -73,36 +73,26 @@ fi
 
 USE_BAT_IF_AVAILABLE="${USE_BAT_IF_AVAILABLE:-false}"
 
-function create_fzf_args() {
+function create_preview_file_cmd() {
   local preview_grep_args
   preview_grep_args="$(get_args_quoted "${_GREP_ARGS[@]}")"
 
-  if check_true "$USE_BAT_IF_AVAILABLE" && command -v bat >/dev/null 2>&1; then
-    PREVIEW_FILE_COMMAND="bat --color=always --paging=always --style=numbers --pager \"less --pattern=${1}\" \"\$filename\""
+  if check_true "${USE_BAT_IF_AVAILABLE}" && command -v bat >/dev/null 2>&1; then
+    echo "bat --color=always --paging=always --style=numbers --pager \"less --pattern=${1}\" \"\$filename\""
   else
-    PREVIEW_FILE_COMMAND="git grep -h -C 20 $preview_grep_args -- \"\$filename\""
-    # PREVIEW_FILE_COMMAND="${PREVIEW_FILE_COMMAND} | bat --color=always --language=\$fileext"
+    echo "git grep -h -C 20 $preview_grep_args -- \"\$filename\""
   fi
+}
 
-  _FZF_ARGS=()
-  if test -n "${FZF_ARGS-}"; then
-    # shellcheck disable=SC2206
-    _FZF_ARGS+=($FZF_ARGS)
-  fi
-
-  _FZF_ARGS+=(
-    --ansi
-    --no-sort
-    # --no-mouse
-    --layout "reverse"
-    --multi
-    --header "use right arrow to open in idea | git grep ${_GREP_ARGS[*]}"
-    --preview "filename=\$(echo {} | pcregrep -o1 '^([^:]+):([0-9]+):'); fileext=\$(echo \$filename | pcregrep -o1 '.*\\.([^.]+)$'); lineno=\$(echo {} | pcregrep -o2 '^([^:]+):([0-9]+):'); echo \"\${filename}:\${lineno}\"; echo '$(echo_sep)'; ${PREVIEW_FILE_COMMAND}"
-    --preview-window 'down:wrap:hidden'
-    --bind '?:toggle-preview'
-    --bind 'right:execute-silent(open_grepped_lines {})'
+function create_open_grepped_lines_args() {
+  open_grepped_lines_args=(
+    --ask
+    --line-numbers
+    --select-lines
+    --select-header "use right arrow to open in idea | git grep ${_GREP_ARGS[*]}"
+    --select-preview-file-cmd "$(create_preview_file_cmd "$@")"
   )
-  export _FZF_ARGS
+  export open_grepped_lines_args
 }
 
 _GREP_ARGS+=("$@")
@@ -116,18 +106,16 @@ _GREP_ARGS=(
   "${_GREP_ARGS[@]}"
 )
 
-create_fzf_args "$@"
-
 if check_debug; then
-  echo "_GREP_ARGS: ${_GREP_ARGS[*]}"
-  echo "_FZF_ARGS: ${_FZF_ARGS[*]}"
+  create_open_grepped_lines_args "$@"
+  echo "_GREP_ARGS:              ${_GREP_ARGS[*]}"
+  echo "open_grepped_lines_args: ${open_grepped_lines_args[*]}"
   exit 0
 fi
 
-if command -v ask_to_open_grepped_lines >/dev/null 2>&1; then
-  results="$(git grep "${_GREP_ARGS[@]}" | fzf "${_FZF_ARGS[@]}")"
-  results_exit_code="$?"
-  ask_to_open_grepped_lines --lines-exit-code "$results_exit_code" "$results"
+if command -v open_grepped_lines >/dev/null 2>&1; then
+  create_open_grepped_lines_args "$@"
+  git grep "${_GREP_ARGS[@]}" | open_grepped_lines "${open_grepped_lines_args[@]}" -
 else
-  git grep "${_GREP_ARGS[@]}" | fzf "${_FZF_ARGS[@]}"
+  git grep "${_GREP_ARGS[@]}"
 fi

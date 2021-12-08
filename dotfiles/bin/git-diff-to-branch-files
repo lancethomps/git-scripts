@@ -10,7 +10,7 @@ _GIT_ARGS=(
   "$@"
   --name-only
 )
-  
+
 function create_open_grepped_lines_args() {
   open_grepped_lines_args=(
     --ask

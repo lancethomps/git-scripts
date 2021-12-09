@@ -1,6 +1,166 @@
-#!/usr/bin/env bash
-################################################################### SETUP ########################################################################
-set -o errexit -o errtrace -o nounset
-##################################################################################################################################################
+#!/usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
+import argparse
+import re
+import sys
+from typing import Dict, List, Optional
 
-git shortlog --summary --numbered --all --no-merges --email "$@"
+from ltpylib import procs
+from ltpylib.common_types import TypeWithDictRepr
+from ltpylib.opts import (
+  BaseArgs,
+  create_default_with_positionals_arg_parser,
+  OutputFormatArgs,
+  PagerArgs,
+  parse_args_with_positionals_and_init_others,
+)
+from ltpylib.output import dicts_to_markdown_table, prettify_json_auto_color, prettify_yaml
+
+
+class GitCommitCountLine(TypeWithDictRepr):
+  COMMIT_COUNT_REGEX = re.compile(r"^\s*(\d+)\s+(.*?)(?: <(.*?)>)?$")
+  GITHUB_USER_NAME_EMAIL_REGEX = re.compile(r"^\d+\+(.*?)@users.noreply.github.com$")
+
+  def __init__(self, line: str):
+    match = GitCommitCountLine.COMMIT_COUNT_REGEX.fullmatch(line)
+    if not match:
+      raise ValueError(f"bad line: {line}")
+
+    self.commit_count: int = int(match.group(1))
+    self.user_name: str = match.group(2).strip()
+    self.user_email: Optional[str] = match.group(3)
+
+    self.all_user_names: List[str] = [self.user_name]
+    self.all_user_emails: List[str] = [self.user_email] if self.user_email else []
+
+  def add_other(self, other: 'GitCommitCountLine'):
+    if other.user_name and other.user_name not in self.all_user_names:
+      self.all_user_names.append(other.user_name)
+
+    if other.user_email and other.user_email not in self.all_user_emails:
+      self.all_user_emails.append(other.user_email)
+
+    self.commit_count += other.commit_count
+    other_gh_name = other.get_github_user_name_from_email()
+    if other_gh_name and other_gh_name not in self.all_user_names:
+      self.all_user_names.append(other_gh_name)
+
+  def get_github_user_name_from_email(self) -> Optional[str]:
+    if not self.user_email:
+      return None
+
+    match = GitCommitCountLine.GITHUB_USER_NAME_EMAIL_REGEX.fullmatch(self.user_email)
+    return match.group(1) if match else None
+
+
+class ScriptArgs(BaseArgs, OutputFormatArgs, PagerArgs):
+
+  def __init__(self, args: argparse.Namespace):
+    BaseArgs.__init__(self, args)
+    OutputFormatArgs.__init__(self, args)
+    PagerArgs.__init__(self, args)
+
+    self.git_cmd_args: List[str] = args.git_cmd_args
+
+
+def main():
+  args = _parse_args()
+  git_output = call_git_shortlog(args)
+  by_name: Dict[str, GitCommitCountLine] = {}
+  by_email: Dict[str, GitCommitCountLine] = {}
+  counts: List[GitCommitCountLine] = []
+  for line in git_output:
+    parsed = GitCommitCountLine(line)
+    parsed_gh_name = parsed.get_github_user_name_from_email()
+
+    combined = check_for_existing(by_name, parsed, parsed.user_name)
+
+    if not combined:
+      combined = check_for_existing(by_name, parsed, parsed_gh_name)
+
+    if not combined:
+      combined = check_for_existing(by_email, parsed, parsed.user_email)
+
+    if not combined:
+      combined = parsed
+      counts.append(combined)
+
+    if parsed.user_name and parsed.user_name not in by_name:
+      by_name[parsed.user_name] = combined
+
+    if parsed_gh_name and parsed_gh_name not in by_name:
+      by_name[parsed_gh_name] = combined
+
+    if parsed.user_email and parsed.user_email not in by_email:
+      by_email[parsed.user_email] = combined
+
+  counts.sort(key=lambda x: x.commit_count, reverse=True)
+  for count in counts:
+    count.all_user_names.sort()
+    count.all_user_emails.sort()
+
+  if args.json:
+    result = prettify_json_auto_color(counts)
+  elif args.yaml:
+    result = prettify_yaml(counts)
+  else:
+    result = dicts_to_markdown_table(counts)
+
+  if args.should_use_pager():
+    procs.run_with_regular_stdout(get_pager(args), check=True, input=result)
+  else:
+    print(result)
+
+
+def get_pager(args: ScriptArgs) -> str:
+  has_pager, pager = procs.run_and_parse_output(["git", "config", "core.pager"], check=False)
+  if has_pager:
+    return pager
+
+  return args.pager
+
+
+def check_for_existing(existing: Dict[str, GitCommitCountLine], parsed: GitCommitCountLine, value: str) -> Optional[GitCommitCountLine]:
+  if not value:
+    return None
+
+  if value not in existing:
+    return None
+
+  combined = existing.get(value)
+  combined.add_other(parsed)
+
+  return combined
+
+
+def call_git_shortlog(args: ScriptArgs) -> List[str]:
+  git_cmd = [
+    "git",
+    "--no-pager",
+    "shortlog",
+    "--summary",
+    "--numbered",
+    "--all",
+    "--no-merges",
+    "--email",
+  ]
+  if args.git_cmd_args:
+    git_cmd.extend(args.git_cmd_args)
+
+  return procs.run_and_parse_output(git_cmd, check=True, stderr=sys.stderr)[1].splitlines()
+
+
+def _parse_args() -> ScriptArgs:
+  arg_parser = create_default_with_positionals_arg_parser(positionals_key="git_cmd_args")
+
+  OutputFormatArgs.add_arguments_to_parser(arg_parser)
+  PagerArgs.add_arguments_to_parser(arg_parser)
+
+  return ScriptArgs(parse_args_with_positionals_and_init_others(arg_parser))
+
+
+if __name__ == "__main__":
+  try:
+    main()
+  except KeyboardInterrupt:
+    exit(130)

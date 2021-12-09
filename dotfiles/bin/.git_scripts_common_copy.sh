@@ -254,6 +254,10 @@ function longest_line_length() {
 function join_by_newline() {
   join_by $'\n' "$@"
 }
+function join_by_newline_with_end() {
+  join_by_newline "$@"
+  echo
+}
 function join_by() {
   local d=$1
   shift

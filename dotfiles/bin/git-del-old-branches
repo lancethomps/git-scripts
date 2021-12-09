@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./.git_command_defaults.sh
+source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
+##################################################################################################################################################
+
+declare -x old_branches
+
+function pull_old_branches() {
+  mapfile -t old_branches < <(git old-branches)
+}
+
+git fetch --prune
+pull_old_branches
+
+if test "${#old_branches[@]}" -eq 0; then
+  echo "No old branches found"
+  exit 0
+fi
+
+if ! git branch -d "${old_branches[@]}"; then
+  previous_old_branches=("${old_branches[@]}")
+  pull_old_branches
+  if test "${#old_branches[@]}" -ne 0; then
+    echo_with_title_sep "Need to force delete some old branches"
+    join_by_newline_with_end "${old_branches[@]}"
+    echo_sep
+    if confirm_with_auto "Force delete above branches?"; then
+      git branch -D "${old_branches[@]}"
+    fi
+  else
+    echo "Error occurred when running git branch -d ${previous_old_branches[*]} that does not appear to be related to needing to force delete branches"
+    exit 1
+  fi
+fi
+
+exit 0

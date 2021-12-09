@@ -8,7 +8,7 @@ source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 # shellcheck source=.dotfiles/.jenkins_script_setup.sh disable=SC1091
 source "$DOTFILES/.jenkins_script_setup.sh"
 
-last_build_url="$(git jenkins-last-build-url)"
+job_url="$(get_job_url_from_repo)"
 
-api_url="${last_build_url}/api/json"
+api_url="${job_url}/lastBuild/api/json"
 curl --user "$(get_jenkins_basic_auth)" --silent "$api_url" | jq --sort-keys

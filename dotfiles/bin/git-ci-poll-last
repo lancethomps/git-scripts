@@ -3,5 +3,5 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-last_build_url="$(git jenkins-last-build-url)"
+last_build_url="$(git ci-last-url)"
 jenkins_poll_build "$last_build_url" "$@"

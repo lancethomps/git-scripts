@@ -48,7 +48,7 @@ function confirm() {
     [yY][eE][sS] | [yY] | "") true ;;
     [nN][oO] | [nN]) false ;;
     *)
-      log_error "Incorrect value entered... Try again."
+      echo "Incorrect value entered... Try again."
       confirm "$@"
       ;;
   esac

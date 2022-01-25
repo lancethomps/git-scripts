@@ -1,2 +1,15 @@
 #!/usr/bin/env bash
-git symbolic-ref -q --short HEAD || git describe --tags --exact-match 2>/dev/null
+if git symbolic-ref -q --short HEAD || git describe --tags --exact-match 2>/dev/null; then
+  exit 0
+fi
+
+git_dir="$(git rev-parse --git-dir)"
+if test -e "${git_dir}/rebase-merge/head-name"; then
+  sed 's/refs\/heads\///g' <"${git_dir}/rebase-merge/head-name"
+  exit 0
+elif test -e "${git_dir}/rebase-apply/head-name"; then
+  sed 's/refs\/heads\///g' <"${git_dir}/rebase-merge/head-name"
+  exit 0
+fi
+
+exit 1

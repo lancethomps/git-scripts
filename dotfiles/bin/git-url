@@ -1,11 +1,25 @@
 #!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
 
-if git remote get-url origin 2>/dev/null; then
+DEFAULT_REMOTE_TYPE="origin"
+remote_type="${1:-${DEFAULT_REMOTE_TYPE}}"
+
+if git remote get-url "${remote_type}" 2>/dev/null; then
   exit 0
 fi
 
-if git config --get remote.origin.url 2>/dev/null; then
+if git config --get "remote.${remote_type}.url" 2>/dev/null; then
   exit 0
+fi
+
+if test "${remote_type-}" != "${DEFAULT_REMOTE_TYPE}"; then
+  set -o pipefail
+  if git remote -v | grep -E "^${remote_type}" | head -1 | awk '{ print $2 }'; then
+    exit 0
+  fi
+  exit 1
 fi
 
 git remote -v | head -1 | awk '{ print $2 }'

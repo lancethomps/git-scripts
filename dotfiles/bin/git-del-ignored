@@ -17,6 +17,10 @@ while test $# -gt 0; do
       auto_confirm=true
       shift
       ;;
+    --select)
+      select=true
+      shift
+      ;;
     *)
       PASSTHROUGH_ARGS+=("$1")
       shift
@@ -48,6 +52,14 @@ git clean --dry-run "${git_clean_args[@]}"
 echo_sep
 log_verbose git clean "${git_clean_args[@]}"
 
-if confirm_with_auto 'Delete above ignored files?'; then
+if check_true "${select-}"; then
+  mapfile -t remove_files < <(git clean --dry-run "${git_clean_args[@]}" | sed -E 's/^Would remove //g' | select_prompt_fzf --header "Select files to remove")
+  if test "${#remove_files[@]}" -eq 0; then
+    exit_fatal "No files selected"
+  fi
+  echo_with_title_sep "Removing below files..."
+  join_by_newline_with_end "${remove_files[@]}"
+  rm -rf "${remove_files[@]}"
+elif confirm_with_auto 'Delete above ignored files?'; then
   git clean "${git_clean_args[@]}"
 fi

@@ -53,7 +53,7 @@ echo_sep
 log_verbose git clean "${git_clean_args[@]}"
 
 if check_true "${select-}"; then
-  mapfile -t remove_files < <(git clean --dry-run "${git_clean_args[@]}" | sed -E 's/^Would remove //g' | select_prompt_fzf --header "Select files to remove")
+  mapfile -t remove_files < <(git clean --dry-run "${git_clean_args[@]}" | sed -E 's/^Would remove //g' | fzf --layout reverse --multi --ansi --no-sort --bind "ctrl-a:select-all" --header "Select files to remove")
   if test "${#remove_files[@]}" -eq 0; then
     exit_fatal "No files selected"
   fi

@@ -48,6 +48,10 @@ while test $# -gt 0; do
       shift
       DIRECTION="incoming"
       ;;
+    --select)
+      select=true
+      shift
+      ;;
     --)
       shift
       break
@@ -96,6 +100,15 @@ if test -z "${MODIFIED_FILES-}"; then
   echo "No modified files!"
   exit 1
 fi
+
+if check_true "${select-}"; then
+  mapfile -t selected_files < <(join_by_newline "${MODIFIED_FILES[@]}" | fzf --layout reverse --multi --ansi --no-sort --bind "ctrl-a:select-all" --header "Select files to copy")
+  if test "${#selected_files[@]}" -eq 0; then
+    exit_fatal "No files selected"
+  fi
+  MODIFIED_FILES=("${selected_files[@]}")
+fi
+
 FIRST_PAD="$(longest_line_length "${MODIFIED_FILES[@]}")"
 if test "$DIRECTION" = "incoming"; then
   FIRST_PAD=$((FIRST_PAD + ${#SOURCE_DIR}))

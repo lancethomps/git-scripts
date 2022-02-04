@@ -120,7 +120,7 @@ function uninstall_hook() {
   else
     rm -v "$install_to_file"
   fi
-  
+
   if test -z "$(ls -A "${install_to_dir}")"; then
     uninstall_base_hook_script "$hook_type"
   fi

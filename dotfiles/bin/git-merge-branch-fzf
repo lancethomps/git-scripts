@@ -10,7 +10,7 @@ if test -n "${1:-}" && git does-branch-exist "${1:-}"; then
   shift
 else
   GIT_CURRENT_BRANCH="$(git current-branch)"
-  GIT_BRANCH="$(git branches-info refs/remotes/origin/ --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | fzf --ansi --no-sort --layout "reverse" --header "Current branch: ${GIT_CURRENT_BRANCH}" | pcregrep -o1 '\t([^\t]+)$')"
+  GIT_BRANCH="$(git branches refs/remotes/origin/ --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | fzf --ansi --no-sort --layout "reverse" --header "Current branch: ${GIT_CURRENT_BRANCH}" | pcregrep -o1 '\t([^\t]+)$')"
 fi
 
 if check_debug; then

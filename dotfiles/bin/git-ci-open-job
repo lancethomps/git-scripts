@@ -6,7 +6,11 @@ source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
 function get_url_travis() {
-  echo "https://travis-ci.org/github/$(git ui-url-project)/$(git ui-url-repo)"
+  echo "https://app.travis-ci.com/$(git ui-url-project)/$(git ui-url-repo)"
+}
+
+function get_url_github() {
+  echo "$(git ui-url-root)/actions"
 }
 
 function get_url_jenkins() {
@@ -18,6 +22,8 @@ function get_url_jenkins() {
 
 if test -e "Jenkinsfile"; then
   job_url="$(get_url_jenkins)"
+elif test -e ".github/workflows/build.yml"; then
+  job_url="$(get_url_github)"
 elif test -e ".travis.yml"; then
   job_url="$(get_url_travis)"
 else

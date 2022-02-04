@@ -5,12 +5,37 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
+################################################################# FILTERARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    --open)
+      open=true
+      shift
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
 # shellcheck source=.dotfiles/.jenkins_script_setup.sh disable=SC1091
 source "$DOTFILES/.jenkins_script_setup.sh"
 
 job_url="$(get_job_url_from_repo)"
 
 api_url="${job_url}/api/json"
-last_build_url="$(curl --user "$(get_jenkins_basic_auth)" --silent "$api_url" | jq --raw-output '.lastBuild.url')"
+build_url="$(curl --user "$(get_jenkins_basic_auth)" --silent "$api_url" | jq --raw-output '.lastBuild.url')"
 
-echo "$last_build_url"
+echo "$build_url"
+
+if test "${open-}" = "true"; then
+  if test "${#PASSTHROUGH_ARGS[@]}" -ne 0; then
+    build_url="${build_url}${PASSTHROUGH_ARGS[*]}"
+  fi
+  open "$build_url"
+fi
+
+exit 0

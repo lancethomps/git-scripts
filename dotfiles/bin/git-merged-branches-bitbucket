@@ -12,4 +12,4 @@ if test "${#bb_branches[@]}" -eq 0; then
   exit 1
 fi
 
-git branches-info "${bb_branches[@]}" --color=always "$@"
+git branches "${bb_branches[@]}" --color=always "$@"

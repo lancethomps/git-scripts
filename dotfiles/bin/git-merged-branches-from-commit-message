@@ -23,4 +23,4 @@ mapfile -t merged_branches < <(git log --pretty=oneline --grep='^Merge pull requ
   sed -E 's/^/refs\/remotes\/origin\//g' |
   sort)
 
-git branches-info "${merged_branches[@]}"
+git branches "${merged_branches[@]}"

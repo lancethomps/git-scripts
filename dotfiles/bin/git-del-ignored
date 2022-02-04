@@ -32,7 +32,6 @@ done
 git_clean_args=(
   -Xd
   --force
-  "${PASSTHROUGH_ARGS[@]}"
 )
 
 if test "${all-}" != "true"; then
@@ -47,6 +46,8 @@ if test "${all-}" != "true"; then
     --exclude='!config/initializers/local_overrides.rb'
   )
 fi
+
+git_clean_args+=("${PASSTHROUGH_ARGS[@]}")
 
 git clean --dry-run "${git_clean_args[@]}"
 echo_sep

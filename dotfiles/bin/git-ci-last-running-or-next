@@ -3,14 +3,12 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git_diff_args=(--no-ext-diff --quiet)
-
 ################################################################# FILTERARGS #####################################################################
 PASSTHROUGH_ARGS=()
 while test $# -gt 0; do
   case "$1" in
-    --no-head)
-      no_head=true
+    --open)
+      open=true
       shift
       ;;
     *)
@@ -21,14 +19,29 @@ while test $# -gt 0; do
 done
 ##################################################################################################################################################
 
-if ! test "${no_head-}" = "true"; then
-  git_diff_args+=(HEAD)
-fi
-
-git_diff_args+=("${PASSTHROUGH_ARGS[@]}")
-
-if git diff "${git_diff_args[@]}" && ! git has-untracked; then
-  exit 0
-else
+if ! last_json="$(git ci-last)"; then
+  echo "could not get last build JSON: ${last_json}"
   exit 1
 fi
+
+last_url="$(echo "$last_json" | jq --raw-output '.url')"
+
+if test "$(echo "$last_json" | jq -r '.building')" = "true"; then
+  build_url="$last_url"
+else
+  next_build_num="$(echo "$last_json" | jq '.number + 1')"
+  next_build_url_prefix="$(echo "$last_url" | pcregrep -o1 '(.*?)/\d+/$')"
+  next_build_url="${next_build_url_prefix}/${next_build_num}/"
+  build_url="${next_build_url}"
+fi
+
+echo "$build_url"
+
+if test "${open-}" = "true"; then
+  if test "${#PASSTHROUGH_ARGS[@]}" -ne 0; then
+    build_url="${build_url}${PASSTHROUGH_ARGS[*]}"
+  fi
+  open "$build_url"
+fi
+
+exit 0

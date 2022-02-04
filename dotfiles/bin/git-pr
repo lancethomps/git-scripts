@@ -20,7 +20,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [--no-body] [--simple]
+       ${_SCRIPT_NAME_GIT} [--no-body] [--simple] [--to-ref <to_ref>]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -52,16 +52,33 @@ while test $# -gt 0; do
       simple=true
       shift
       ;;
+    --to-ref)
+      shift
+      to_ref="$1"
+      shift
+      ;;
     --)
       shift
       break
       ;;
+    -*)
+      echo "Unknown option: $1"
+      _usage
+      exit 1
+      ;;
     *)
+      to_ref="$1"
+      shift
       break
       ;;
   esac
 done
 ##################################################################################################################################################
+
+if test -z "${to_ref-}"; then
+  to_ref="$(git default-branch)"
+fi
+export PR_TO_REF="$to_ref"
 
 git_url="$(git url)"
 scm_domain="$(echo "$git_url" | pcregrep -o3 "$GIT_URL_REGEX")"
@@ -76,7 +93,7 @@ function github_url() {
     return 0
   fi
 
-  url_base="${browse_url_root}/compare/$(git default-branch)...${git_current_branch_url}"
+  url_base="${browse_url_root}/compare/${PR_TO_REF}...${git_current_branch_url}"
   query_params+=("title=$(git pr-title --urlencode)")
 
   if ! check_true "${no_body-}"; then

@@ -3,4 +3,10 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git rev-list --left-right '@{upstream}...HEAD' >/dev/null 2>&1 || exit 1
+if test -z "${1-}"; then
+  branch_notation='@{upstream}...HEAD'
+else
+  branch_notation="origin/$1...$1"
+fi
+
+git rev-list --left-right "${branch_notation}" >/dev/null 2>&1 || exit 1

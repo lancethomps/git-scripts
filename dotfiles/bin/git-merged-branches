@@ -7,4 +7,4 @@ source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 
 set_git_branch_target_if_missing
 
-git branches-info refs/remotes --color=always --merged="${GIT_BRANCH_TARGET}" "$@" | grep -v -E "$GIT_BRANCH_SKIP_REGEX"
+git branches refs/remotes --color=always --merged="${GIT_BRANCH_TARGET}" "$@" | grep -v -E "$GIT_BRANCH_SKIP_REGEX"

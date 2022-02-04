@@ -33,7 +33,7 @@ if test -z "${PASSTHROUGH_ARGS[0]:-}" && ! confirm_with_auto "Delete local and r
   exit 1
 fi
 
-if ! git has-upstream; then
+if ! git has-upstream "${BRANCH_NAME}"; then
   echo "No upstream, not deleting remote branch..."
 else
   git push --delete origin "${BRANCH_NAME}"

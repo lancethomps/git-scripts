@@ -6,7 +6,9 @@ source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
 branch_args=''
-if test -z "${1-}" && check_not_true "${NO_BRANCHES_INFO_BRANCH_ARGS:-}"; then
+if test "${1-}" = "--all-branches"; then
+  shift
+elif test -z "${1-}" && check_not_true "${NO_BRANCHES_INFO_BRANCH_ARGS:-}"; then
   branch_args='refs/remotes/origin/'
 fi
 

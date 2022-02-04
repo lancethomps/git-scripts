@@ -14,9 +14,9 @@ GIT_CURRENT_BRANCH="$(git current-branch)"
 
 function get_branches() {
   if test "${mine-}" = "true"; then
-    git branches-info refs/remotes/origin/ --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g' | grep "$(git config user.name)"
+    git branches refs/remotes/origin/ --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g' | grep "$(git config user.name)"
   else
-    git branches-info refs/remotes/origin/ --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g'
+    git branches refs/remotes/origin/ --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g'
   fi
 }
 

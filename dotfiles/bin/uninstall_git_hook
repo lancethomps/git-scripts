@@ -94,6 +94,15 @@ if test -z "${1:-}"; then
 fi
 ##################################################################################################################################################
 
+function uninstall_base_hook_script() {
+  local hook_type="$1" install_to_dir base_hook_script
+  install_to_dir="${INSTALL_TO_HOOKS_DIR}/${hook_type}.d"
+  base_hook_script="${INSTALL_TO_HOOKS_DIR}/${hook_type}"
+
+  echo "No hooks of type ${hook_type} found, uninstalling base hook script"
+  rm -rv "$install_to_dir" "$base_hook_script"
+}
+
 function uninstall_hook() {
   local hook_name hook_type install_to_dir install_to_file
   hook_name="$1"
@@ -111,6 +120,12 @@ function uninstall_hook() {
   else
     rm -v "$install_to_file"
   fi
+  
+  if test -z "$(ls -A "${install_to_dir}")"; then
+    uninstall_base_hook_script "$hook_type"
+  fi
+
+  return 0
 }
 
 for hook_name in "$@"; do

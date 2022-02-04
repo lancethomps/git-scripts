@@ -15,7 +15,7 @@ jobs:
       shell: bash
       run: |
         brew install bash pcre shellcheck shfmt
-        which -a bash
+        bash --version
         shellcheck --version
         echo "shfmt $(shfmt --version)"
 

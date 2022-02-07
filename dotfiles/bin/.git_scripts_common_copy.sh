@@ -123,7 +123,7 @@ function get_sep_cols() {
   fi
   echo -n "$sep_cols"
 }
-function echo_sep() {
+function log_sep() {
   if test -z "${TERMINAL_SEP:-}"; then
     local rep_count
     rep_count=$(get_sep_cols 2)
@@ -132,18 +132,18 @@ function echo_sep() {
   fi
   echo "$TERMINAL_SEP"
 }
-function echo_with_sep() {
-  echo_sep
+function log_with_sep_around() {
+  log_sep
   echo "$@"
-  echo_sep
+  log_sep
 }
-function echo_with_title_sep() {
+function log_with_title_sep() {
   echo
-  echo_with_title_sep_no_leading_blank_line "$@"
+  log_with_title_sep_no_leading_blank_line "$@"
 }
-function echo_with_title_sep_no_leading_blank_line() {
+function log_with_title_sep_no_leading_blank_line() {
   echo "$@"
-  echo_sep
+  log_sep
 }
 function exit_fatal() {
   local exit_code="${1-}"

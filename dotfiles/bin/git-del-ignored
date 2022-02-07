@@ -50,7 +50,7 @@ fi
 git_clean_args+=("${PASSTHROUGH_ARGS[@]}")
 
 git clean --dry-run "${git_clean_args[@]}"
-echo_sep
+log_sep
 log_verbose git clean "${git_clean_args[@]}"
 
 if check_true "${select-}"; then
@@ -58,7 +58,7 @@ if check_true "${select-}"; then
   if test "${#remove_files[@]}" -eq 0; then
     exit_fatal "No files selected"
   fi
-  echo_with_title_sep "Removing below files..."
+  log_with_title_sep "Removing below files..."
   join_by_newline_with_end "${remove_files[@]}"
   rm -rf "${remove_files[@]}"
 elif confirm_with_auto 'Delete above ignored files?'; then

@@ -23,9 +23,9 @@ if ! git branch -d "${old_branches[@]}"; then
   previous_old_branches=("${old_branches[@]}")
   pull_old_branches
   if test "${#old_branches[@]}" -ne 0; then
-    echo_with_title_sep "Need to force delete some old branches"
+    log_with_title_sep "Need to force delete some old branches"
     join_by_newline_with_end "${old_branches[@]}"
-    echo_sep
+    log_sep
     if confirm_with_auto "Force delete above branches?"; then
       git branch -D "${old_branches[@]}"
     fi

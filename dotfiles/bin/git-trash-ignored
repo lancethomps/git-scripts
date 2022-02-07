@@ -45,7 +45,7 @@ if test "${all-}" != "true"; then
 fi
 
 git clean --dry-run "${git_clean_args[@]}"
-echo_sep
+log_sep
 log_verbose git clean "${git_clean_args[@]}"
 
 if confirm_with_auto 'Trash (trash -Fv) above ignored files?'; then

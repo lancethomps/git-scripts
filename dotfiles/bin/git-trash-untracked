@@ -28,7 +28,7 @@ git_clean_args=(
 )
 
 git clean --dry-run "${git_clean_args[@]}"
-echo_sep
+log_sep
 
 if confirm_with_auto 'Trash (trash -Fv) above untracked files?'; then
   mapfile -t trash_files < <(git clean --dry-run "${git_clean_args[@]}" | sed -E 's/^Would remove //')

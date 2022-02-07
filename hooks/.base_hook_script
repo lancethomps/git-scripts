@@ -8,7 +8,7 @@
 script_dir="$(dirname "$0")"
 hook_name="$(basename "$0")"
 
-function echo_sep() {
+function log_sep() {
   echo '----------------------------------------------------------------------------------'
 }
 
@@ -35,7 +35,7 @@ if test "${#hook_scripts[@]}" -gt 0; then
   for hook in "${hook_scripts[@]}"; do
     echo
     echo "Running $hook_name hook at ${hook}"
-    echo_sep
+    log_sep
 
     echo "$stdin" | "$hook" "$@"
     exit_code=$?

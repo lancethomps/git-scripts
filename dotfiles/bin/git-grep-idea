@@ -28,7 +28,7 @@ if test "${#FOUND_FILES[@]}" -eq 0; then
 fi
 
 echo 'Matching Files
-'"$(echo_sep)"'
+'"$(log_sep)"'
 '"$(join_by_newline "${FOUND_FILES[@]}")"'
 '
 

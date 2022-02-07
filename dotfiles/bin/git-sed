@@ -119,7 +119,7 @@ if [ "$need_bak" ]; then
   command="git -c grep.fullname=false grep -lz '${search-}' | xargs -0$r ${_sed_ext_in_place:?} 's$sep${search-}$sep${replacement-}$sep${flags-}'"
   if check_debug; then
     echo "COMMAND"
-    echo_with_sep "$command"
+    log_with_sep_around "$command"
   else
     # shellcheck disable=SC2086,SC2090
     git -c grep.fullname=false grep -lz "${search-}" | xargs -0"$r" ${_sed_ext_in_place:?} "s$sep${search-}$sep${replacement-}$sep${flags-}"
@@ -128,7 +128,7 @@ else
   command="git -c grep.fullname=false grep -lz '${search-}' | xargs -0$r ${_sed_ext_in_place:?} 's$sep${search-}$sep${replacement-}$sep${flags-}'"
   if check_debug; then
     echo "COMMAND"
-    echo_with_sep "$command"
+    log_with_sep_around "$command"
   else
     # shellcheck disable=SC2086,SC2090
     git -c grep.fullname=false grep -lz "${search-}" | xargs -0"$r" ${_sed_ext_in_place:?} "s$sep${search-}$sep${replacement-}$sep${flags-}"

@@ -67,15 +67,15 @@ use_git_pager_if_set
 output=$(
   cat <<EOF
 COMMITS PER USER
-$(echo_sep)
+$(log_sep)
 $(git count-commits)
 
 COMMITS PER YEAR
-$(echo_sep)
+$(log_sep)
 $(git count-commits-per-year)
 
 COMMITS PER MONTH
-$(echo_sep)
+$(log_sep)
 $(git count-commits-per-month)
 EOF
 )

@@ -36,14 +36,14 @@ git_clean_args=(
 )
 
 git clean --dry-run "${git_clean_args[@]}"
-echo_sep
+log_sep
 
 if check_true "${select-}"; then
   mapfile -t remove_files < <(git clean --dry-run "${git_clean_args[@]}" | sed -E 's/^Would remove //g' | fzf --layout reverse --multi --ansi --no-sort --bind "ctrl-a:select-all" --header "Select files to remove")
   if test "${#remove_files[@]}" -eq 0; then
     exit_fatal "No files selected"
   fi
-  echo_with_title_sep "Removing below files..."
+  log_with_title_sep "Removing below files..."
   join_by_newline_with_end "${remove_files[@]}"
   rm -rf "${remove_files[@]}"
 elif confirm_with_auto 'Delete above untracked files?'; then

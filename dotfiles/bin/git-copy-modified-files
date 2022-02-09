@@ -19,7 +19,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--from] <copy_to_or_from_dir>
+       ${_SCRIPT_NAME} [--diff-to-branch <diff_to_branch>] [--from] <copy_to_or_from_dir>
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -43,6 +43,11 @@ while test $# -gt 0; do
     --verbose)
       shift
       export verbose=true
+      ;;
+    --diff-to-branch)
+      shift
+      diff_to_branch="$1"
+      shift
       ;;
     --from)
       shift
@@ -89,12 +94,22 @@ if test "$DIRECTION" = "incoming"; then
   SOURCE_DIR="${COPY_DIR}/"
   MODIFIED_FILES_CMD+=(-C "$COPY_DIR")
 fi
-MODIFIED_FILES_CMD+=(
-  ls-files
-  --others
-  --exclude-standard
-  --modified
-)
+
+if test -n "${diff_to_branch-}"; then
+  MODIFIED_FILES_aaCMD+=(
+    diff-to-branch
+    "${diff_to_branch}"
+    --name-only
+  )
+else
+  MODIFIED_FILES_CMD+=(
+    ls-files
+    --others
+    --exclude-standard
+    --modified
+  )
+fi
+
 mapfile -t MODIFIED_FILES < <(git "${MODIFIED_FILES_CMD[@]}" | sort)
 if test -z "${MODIFIED_FILES-}"; then
   echo "No modified files!"

@@ -19,7 +19,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--diff-to-branch <diff_to_branch>] [--from] <copy_to_or_from_dir>
+       ${_SCRIPT_NAME} [--diff-to-branch <diff_to_branch>] [--from] [--select | --select-all] <copy_to_or_from_dir>
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -54,6 +54,11 @@ while test $# -gt 0; do
       DIRECTION="incoming"
       ;;
     --select)
+      select=true
+      shift
+      ;;
+    --select-all)
+      select_all=true
       select=true
       shift
       ;;
@@ -96,10 +101,14 @@ if test "$DIRECTION" = "incoming"; then
 fi
 
 if test -n "${diff_to_branch-}"; then
-  MODIFIED_FILES_aaCMD+=(
+  MODIFIED_FILES_CMD+=(
     diff-to-branch
     "${diff_to_branch}"
     --name-only
+  )
+elif check_true "${select_all-}"; then
+  MODIFIED_FILES_CMD+=(
+    ls-files
   )
 else
   MODIFIED_FILES_CMD+=(

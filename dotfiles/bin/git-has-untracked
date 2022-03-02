@@ -3,5 +3,6 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git status --porcelain 2>/dev/null | grep --quiet "^??"
+git ls-files --others --exclude-standard --directory --no-empty-directory --error-unmatch -- ':/*' >/dev/null 2>&1
+#git status --porcelain 2>/dev/null | grep --quiet "^??"
 #git ls-files --others --exclude-standard | grep --quiet '.*'

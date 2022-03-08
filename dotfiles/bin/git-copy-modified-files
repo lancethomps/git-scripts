@@ -112,10 +112,7 @@ elif check_true "${select_all-}"; then
   )
 else
   MODIFIED_FILES_CMD+=(
-    ls-files
-    --others
-    --exclude-standard
-    --modified
+    modified
   )
 fi
 

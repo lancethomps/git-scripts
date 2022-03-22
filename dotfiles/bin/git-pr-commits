@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+function has_format_arg() {
+  local val
+
+  for val in "$@"; do
+    if [[ $val == '--format'* ]]; then
+      return 0
+    fi
+    if [[ $val == '--pretty'* ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+if test -z "${PR_TO_REF:-}"; then
+  if test -n "${1:-}" && [[ $1 != '-'* ]]; then
+    PR_TO_REF="$1"
+    shift
+  else
+    PR_TO_REF="origin/$(git default-branch)"
+  fi
+fi
+
+git_current_branch="$(git current-branch)"
+
+git_log_args=(
+  --left-right
+  --cherry-pick
+  --no-merges
+  --reverse
+  --date=iso
+)
+
+if ! has_format_arg "$@"; then
+  git_log_args+=(
+    --stat
+    --pretty='format:%C(yellow)%h %C(cyan)%>(12)%ad %Cgreen%<(10)%aN%Cred%d %Creset%B'
+  )
+fi
+
+git_log_args+=(
+  "$@"
+  "${git_current_branch}"
+  "^${PR_TO_REF}"
+)
+
+git log "${git_log_args[@]}"

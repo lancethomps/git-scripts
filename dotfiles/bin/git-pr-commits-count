@@ -3,9 +3,4 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-commit_format='%s%n%w(100000,2,2)%-b'
-if test "$(git pr-commits-count)" -gt 1; then
-  commit_format="* ${commit_format}"
-fi
-
-git pr-commits --format="$commit_format" "$@"
+git pr-commits --format=oneline "$@" | wc -l | sed -E 's/^ *//g'

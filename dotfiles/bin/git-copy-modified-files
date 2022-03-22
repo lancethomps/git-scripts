@@ -145,6 +145,8 @@ for file in "${MODIFIED_FILES[@]}"; do
 
   if check_debug; then
     echo '[DEBUG]' cp -f "$source_file" "$dest_file"
+  elif ! test -e "$source_file"; then
+    rm -rf "$dest_file"
   else
     if ! test -e "$dest_dir"; then
       mkdir -pv "$dest_dir"

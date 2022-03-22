@@ -11,4 +11,12 @@ source "$DOTFILES/.jenkins_script_setup.sh"
 job_url="$(get_job_url_from_repo)"
 
 api_url="${job_url}/lastBuild/api/json"
-curl --user "$(get_jenkins_basic_auth)" --silent "$api_url" | jq --sort-keys
+api_response="$(curl --user "$(get_jenkins_basic_auth)" --silent "$api_url")"
+
+if ! echo "$api_response" | jq --sort-keys --exit-status; then
+  echo "ERROR Problem with Jenkins response from ${api_url} - output below" >&2
+  echo "$api_response" >&2
+  exit 1
+fi
+
+exit 0

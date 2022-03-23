@@ -18,7 +18,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--files] [--select-files] [--file | -f <file_to_commit>...] [--message | -m <message>] <message_or_files>
+       ${_SCRIPT_NAME} [--cd-to-git-base-dir] [--files] [--select-files] [--file | -f <file_to_commit>...] [--message | -m <message>] <message_or_files>
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -43,6 +43,10 @@ while test $# -gt 0; do
       ;;
     --verbose)
       export verbose=true
+      shift
+      ;;
+    --cd-to-git-base-dir)
+      cd_to_git_base_dir=true
       shift
       ;;
     --files)
@@ -80,6 +84,10 @@ while test $# -gt 0; do
   esac
 done
 ##################################################################################################################################################
+
+if check_true "${cd_to_git_base_dir-}"; then
+  cd "$(git base-dir)"
+fi
 
 if check_true "${args_are_files-}"; then
   commit_files+=("$@")

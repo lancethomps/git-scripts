@@ -5,11 +5,69 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--all-branches] [--no-branch-arg] [--simple] [<for_each_ref_arg>...]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+
+EXAMPLES
+       ${_SCRIPT_NAME} --all-branches
+       ${_SCRIPT_NAME} --simple
+       ${_SCRIPT_NAME} refs/remotes/origin/lance
+EOF
+}
+##################################################################################################################################################
+
+################################################################# FILTERARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    --all-branches)
+      all_branches=true
+      shift
+      ;;
+    --no-branch-arg)
+      no_branch_arg=true
+      shift
+      ;;
+    --simple)
+      simple=true
+      shift
+      ;;
+    --)
+      shift "$#"
+      PASSTHROUGH_ARGS+=("$@")
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+function has_branch_arg_as_first_arg() {
+  test "${#PASSTHROUGH_ARGS[@]}" -ne 0 && check_not_true "${no_branch_arg-}"
+}
+
 branch_args=''
-if test "${1-}" = "--all-branches"; then
-  shift
-elif test -z "${1-}" && check_not_true "${NO_BRANCHES_INFO_BRANCH_ARGS:-}"; then
+if check_not_true "${all_branches-}" && ! has_branch_arg_as_first_arg; then
   branch_args='refs/remotes/origin/'
 fi
 
-git for-each-ref ${branch_args} "$@" --sort=-committerdate --format="${GIT_BRANCH_REF_FORMAT}"
+if check_true "${simple-}"; then
+  GIT_BRANCH_REF_FORMAT='%(refname:short)'
+fi
+
+git for-each-ref ${branch_args} "${PASSTHROUGH_ARGS[@]}" --sort=-committerdate --format="${GIT_BRANCH_REF_FORMAT}"

@@ -45,8 +45,9 @@ while test $# -gt 0; do
       shift
       ;;
     --)
-      shift "$#"
+      shift
       PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
       break
       ;;
     *)

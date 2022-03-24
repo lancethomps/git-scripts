@@ -7,4 +7,7 @@ if ! git_url="$(git url)"; then
   exit 1
 fi
 
-basename -s .git "$git_url"
+(
+  set -o pipefail
+  basename -s .git "$git_url" | tr '[:upper:]' '[:lower:]'
+)

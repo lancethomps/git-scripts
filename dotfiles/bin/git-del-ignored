@@ -21,6 +21,10 @@ while test $# -gt 0; do
       select=true
       shift
       ;;
+    --verbose)
+      verbose=true
+      shift
+      ;;
     *)
       PASSTHROUGH_ARGS+=("$1")
       shift

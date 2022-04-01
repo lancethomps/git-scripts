@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./.git_command_defaults.sh
+source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
+##################################################################################################################################################
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} <pr_number>
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+
+EXAMPLES
+       ${_SCRIPT_NAME}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# FILTERARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --)
+      shift
+      PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if test "${#PASSTHROUGH_ARGS[@]}" -eq 0; then
+  _usage "$@"
+  exit 1
+fi
+##################################################################################################################################################
+
+function main() {
+  local browse_url pr_url
+
+  browse_url="$(use_default_branch=true git ui-url)"
+  pr_url="${browse_url}/pull/${1-}"
+
+  if check_debug; then
+    echo "$pr_url"
+  else
+    open "$pr_url"
+  fi
+}
+
+main "${PASSTHROUGH_ARGS[@]}"

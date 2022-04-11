@@ -3,11 +3,65 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--keep-case]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+
+EXAMPLES
+       ${_SCRIPT_NAME}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --keep-case)
+      keep_case=true
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1"
+      _usage
+      exit 1
+      ;;
+  esac
+done
+##################################################################################################################################################
+
 if ! git_url="$(git url)"; then
   exit 1
 fi
 
-(
-  set -o pipefail
-  basename -s .git "$git_url" | tr '[:upper:]' '[:lower:]'
-)
+if ! repo_name="$(basename -s .git "$git_url")"; then
+  exit 1
+fi
+
+if test "${keep_case-}" != "true"; then
+  repo_name="$(echo "$repo_name" | tr '[:upper:]' '[:lower:]')"
+fi
+
+echo "$repo_name"

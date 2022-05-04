@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+function check_git_config() {
+  git config --get ci.type
+}
+
+function check_jenkins() {
+  test -e "Jenkinsfile"
+}
+
+function check_jenkins_extended() {
+  test -n "$(find -Ls . -maxdepth 1 -type f -name 'Jenkinsfile*')"
+}
+
+function check_github() {
+  test -d ".github/workflows"
+}
+
+function check_travis() {
+  test -e ".travis.yml"
+}
+
+function main() {
+  local ci_type="none" git_config_type
+
+  if git_config_type="$(check_git_config)"; then
+    ci_type="$git_config_type"
+  elif check_jenkins; then
+    ci_type="jenkins"
+  elif check_github; then
+    ci_type="github"
+  elif check_travis; then
+    ci_type="travis"
+  elif check_jenkins_extended; then
+    ci_type="jenkins"
+  fi
+
+  echo "$ci_type"
+}
+
+main "$@"

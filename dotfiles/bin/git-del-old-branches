@@ -11,7 +11,7 @@ function pull_old_branches() {
   mapfile -t old_branches < <(git old-branches)
 }
 
-git fetch --prune
+git fetch --prune || true
 pull_old_branches
 
 if test "${#old_branches[@]}" -eq 0; then

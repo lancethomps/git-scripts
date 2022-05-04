@@ -20,15 +20,7 @@ function get_url_jenkins() {
   get_job_url_from_repo
 }
 
-if test -e "Jenkinsfile"; then
-  job_url="$(get_url_jenkins)"
-elif test -e ".github/workflows/build.yml"; then
-  job_url="$(get_url_github)"
-elif test -e ".travis.yml"; then
-  job_url="$(get_url_travis)"
-else
-  job_url="$(get_url_jenkins)"
-fi
+job_url="$("get_url_$(git ci-type)")"
 
 if check_debug; then
   echo "${job_url}"

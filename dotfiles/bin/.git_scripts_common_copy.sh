@@ -251,6 +251,17 @@ function longest_line_length() {
   fi
   echo "${str-}" | awk 'length > max_length { max_length = length; longest_line = $0 } END { print max_length }'
 }
+function join_by() {
+  local d="$1"
+  shift
+  echo -n "$1"
+  shift
+  printf "%s" "${@/#/$d}"
+}
+function join_by_with_end() {
+  join_by "$@"
+  echo
+}
 function join_by_newline() {
   join_by $'\n' "$@"
 }
@@ -258,12 +269,8 @@ function join_by_newline_with_end() {
   join_by_newline "$@"
   echo
 }
-function join_by() {
-  local d=$1
-  shift
-  echo -n "$1"
-  shift
-  printf "%s" "${@/#/$d}"
+function join_by_regex_or() {
+  echo "($(join_by '|' "$@"))"
 }
 
 #dotfiles=web

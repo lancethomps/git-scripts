@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./.git_command_defaults.sh
+source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+function run_grep() {
+  local all_branches local_branches remote_branches branches
+
+  mapfile -t all_branches < <(git branches --simple --all-branches | sort -u)
+  mapfile -t local_branches < <(join_by_newline "${all_branches[@]}" | pcregrep -v '^origin/')
+  mapfile -t remote_branches < <(join_by_newline "${all_branches[@]}" | pcregrep '^origin/' | pcregrep -v "^origin/$(join_by_regex_or "${local_branches[@]}")")
+  branches=("${local_branches[@]}" "${remote_branches[@]}")
+
+  for branch in "${branches[@]}"; do
+    git --no-pager grep --color=always "$@" "$branch" || true
+  done
+}
+
+function main() {
+  if test "${1-}" = "--no-pager"; then
+    shift
+    run_grep "$@"
+  elif ! command -v select_prompt_fzf >/dev/null 2>&1; then
+    run_grep "$@"
+  else
+    run_grep "$@" | select_prompt_fzf
+  fi
+}
+
+main "$@"

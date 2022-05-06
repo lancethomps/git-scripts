@@ -4,7 +4,7 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 revision_range='@{upstream}'
-if ! git has-upstream; then
+if ! git has-remote; then
   revision_range="$(git log --max-count=30 --oneline --decorate | pcregrep -o1 '^([^\s]+) \([^\)]*origin\/' | head -1)"
 fi
 

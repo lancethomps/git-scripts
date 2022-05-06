@@ -7,7 +7,7 @@ if git push; then
   exit 0
 fi
 
-if ! git has-upstream; then
+if ! git has-remote; then
   git push-branch
 else
   exit 1

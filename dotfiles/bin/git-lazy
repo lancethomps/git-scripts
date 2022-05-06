@@ -121,4 +121,4 @@ fi
 
 git add "${commit_files[@]}"
 git commit -m "$commit_message"
-git push-allow-no-upstream
+git push-allow-no-remote

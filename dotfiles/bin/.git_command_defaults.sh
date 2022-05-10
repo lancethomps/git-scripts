@@ -50,7 +50,8 @@ for format in "${GIT_BRANCH_REF_FORMATS[@]}"; do
   GIT_BRANCH_REF_FORMAT="${GIT_BRANCH_REF_FORMAT}${format}"
 done
 
-GIT_TAG_REF_FORMAT="$(echo "$GIT_BRANCH_REF_FORMAT" | sed_ext 's/%\((authorname|committerdate|objectname)/%\(*\1/g')"
+#GIT_TAG_REF_FORMAT="$(echo "$GIT_BRANCH_REF_FORMAT" | sed_ext 's/%\((authorname|committerdate|objectname)/%\(*\1/g')"
+GIT_TAG_REF_FORMAT="$GIT_BRANCH_REF_FORMAT"
 unset GIT_BRANCH_REF_FORMATS
 export GIT_BRANCH_REF_FORMAT
 export GIT_TAG_REF_FORMAT

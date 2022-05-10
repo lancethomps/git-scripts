@@ -64,6 +64,12 @@ function confirm_with_auto() {
   confirm "$@"
 }
 
+function log_debug_or_verbose() {
+  if check_verbose || check_debug; then
+    echo "$@"
+  fi
+  return 0
+}
 function log_verbose() {
   if check_verbose; then
     echo "$@"
@@ -75,6 +81,13 @@ function check_verbose() {
 }
 function check_debug() {
   check_true "${debug_mode:-}"
+}
+function exit_if_debug() {
+  if check_debug; then
+    exit 0
+  fi
+
+  return 0
 }
 function check_not_debug() {
   check_true "${debug_mode:-}" && return 1 || return 0

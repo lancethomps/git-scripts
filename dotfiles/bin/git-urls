@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local _SCRIPT_NAME_GIT
+  _SCRIPT_NAME_GIT="${_SCRIPT_NAME/git-/git }"
+
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME_GIT}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME_GIT} [--url-only] [<remote_type>...]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+
+EXAMPLES
+       ${_SCRIPT_NAME_GIT}
+       ${_SCRIPT_NAME_GIT} --url-only
+       ${_SCRIPT_NAME_GIT} origin upstream
+EOF
+}
+##################################################################################################################################################
+
+################################################################# FILTERARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --url-only)
+      url_only=true
+      shift
+      ;;
+    --)
+      shift
+      PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+function get_url_for_remote() {
+  local remote_type="$1"
+
+  if git remote get-url "${remote_type}" 2>/dev/null; then
+    return 0
+  fi
+
+  if git config --get "remote.${remote_type}.url" 2>/dev/null; then
+    return 0
+  fi
+
+  set -o pipefail
+  if git remote -v | grep -E "^${remote_type}" | head -1 | awk '{ print $2 }'; then
+    set +o pipefail
+    return 0
+  fi
+  set +o pipefail
+
+  echo "Could not find URL for remote $remote_type" >&2
+  return 1
+}
+
+function main() {
+  local remote_types remote_type remote_url
+
+  if test -n "${1-}"; then
+    remote_types=("$@")
+  else
+    mapfile -t remote_types < <(git remote)
+  fi
+
+  for remote_type in "${remote_types[@]}"; do
+    if ! remote_url="$(get_url_for_remote "$remote_type")"; then
+      return 1
+    fi
+    if test "${url_only-}" = "true"; then
+      echo "$remote_url"
+    else
+      printf '%-15s\t%s\n' "$remote_type" "$remote_url"
+    fi
+  done
+}
+
+main "${PASSTHROUGH_ARGS[@]}"

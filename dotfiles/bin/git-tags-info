@@ -43,8 +43,12 @@ if test -n "${1:-}"; then
   shift
 fi
 
+for_each_ref_args=("${branch_args}" "$@" --sort='-committerdate' --format="${GIT_TAG_REF_FORMAT}")
+log_debug_or_verbose git for-each-ref "${for_each_ref_args[@]}"
+exit_if_debug
+
 if should_use_pager; then
-  git for-each-ref "${branch_args}" "$@" --color=always --sort='-*committerdate' --format="${GIT_TAG_REF_FORMAT}" | fzf --ansi --no-sort --layout "reverse"
+  git for-each-ref "${for_each_ref_args[@]}" --color=always | fzf --ansi --no-sort --layout "reverse"
 else
-  git for-each-ref "${branch_args}" "$@" --sort='-*committerdate' --format="${GIT_TAG_REF_FORMAT}"
+  git for-each-ref "${for_each_ref_args[@]}"
 fi

@@ -3,7 +3,8 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-{
-  git --no-pager diff --name-only HEAD "$@"
-  git untracked
-} | sort -u
+function main() {
+  git modified "$@" | grep -E 'src/test/.*Test\..{1,5}$'
+}
+
+main "$@"

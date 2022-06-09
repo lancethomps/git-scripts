@@ -39,7 +39,7 @@ fi
 GIT_BRANCH_REF_FORMATS=(
   '%(align:50)%(committerdate:format:%Y-%m-%d %H:%M:%S) (%(color:green)%(committerdate:relative)%(color:reset))%(end)'
   '%(color:red)%(objectname:short)%(color:reset)'
-  '%(align:30)%(color:blue)%(authorname)%(color:reset)%(end)'
+  '%(align:40)%(color:blue)%(authorname)%(color:reset)%(end)'
   '%(refname:short)'
 )
 GIT_BRANCH_REF_FORMAT=''

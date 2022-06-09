@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+JSON_LOG_FORMAT='{
+  "abbreviated_commit": "%h",
+  "abbreviated_parent": "%p",
+  "abbreviated_tree": "%t",
+  "author": {
+    "name": "%aN",
+    "email": "%aE",
+    "date": "%aD"
+  },
+  "body": "%b",
+  "commit": "%H",
+  "commit_notes": "%N",
+  "committer": {
+    "name": "%cN",
+    "email": "%cE",
+    "date": "%cD"
+  },
+  "encoding": "%e",
+  "parent": "%P",
+  "refs": "%D",
+  "sanitized_subject_line": "%f",
+  "signer": "%GS",
+  "signer_key": "%GK",
+  "subject": "%s",
+  "tree": "%T",
+  "verification_flag": "%G?"
+}'
+
+################################################################# FILTERARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    --no-jq)
+      export no_jq=true
+      shift
+      ;;
+    --)
+      shift
+      PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+function create_pager() {
+  local curr_pager
+
+  if ! curr_pager="$(git config --get core.pager)" || test -z "${curr_pager-}"; then
+    curr_pager='less -RS'
+  fi
+
+  echo "$curr_pager"
+}
+
+function create_temp_json_format() {
+  echo "$JSON_LOG_FORMAT" | sed 's/"/^^^/g' | gsed -z 's/\n/_____/g;s/_____$/\n/'
+}
+
+function main() {
+  local git_args=()
+
+  #  if test "${no_jq-}" != "true"; then
+  #    git_args+=(-c "core.pager=$(create_pager)")
+  #  fi
+
+  git_args+=(log --pretty=format:"$(create_temp_json_format)" "$@")
+
+  git "${git_args[@]}" | sed 's/"/\\"/g' | gsed ':a;N;$!ba;s/\n/ /g' | sed 's/\^^^/"/g' | sed 's/_____/\n/g' | jq --color-output --sort-keys | eval "$(create_pager)"
+}
+
+main "${PASSTHROUGH_ARGS[@]}"

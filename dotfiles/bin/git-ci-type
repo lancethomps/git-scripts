@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./.git_ci_types.sh
+source "${_SCRIPT_DIR}/.git_ci_types.sh" || exit 1
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
@@ -24,18 +27,18 @@ function check_travis() {
 }
 
 function main() {
-  local ci_type="none" git_config_type
+  local ci_type="${CI_NONE}" git_config_type
 
   if git_config_type="$(check_git_config)"; then
     ci_type="$git_config_type"
   elif check_jenkins; then
-    ci_type="jenkins"
+    ci_type="${CI_JENKINS}"
   elif check_github; then
-    ci_type="github"
+    ci_type="${CI_GITHUB}"
   elif check_travis; then
-    ci_type="travis"
+    ci_type="${CI_TRAVIS}"
   elif check_jenkins_extended; then
-    ci_type="jenkins"
+    ci_type="${CI_JENKINS}"
   fi
 
   echo "$ci_type"

@@ -5,6 +5,8 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
+check_supported_ci_types "${CI_JENKINS}"
+
 # shellcheck source=.dotfiles/.jenkins_script_setup.sh disable=SC1091
 source "$DOTFILES/.jenkins_script_setup.sh"
 

@@ -20,4 +20,5 @@ function get_url_jenkins() {
   get_job_url_from_repo
 }
 
+check_supported_ci_types "${CI_GITHUB}" "${CI_JENKINS}" "${CI_TRAVIS}"
 "get_url_$(git ci-type)"

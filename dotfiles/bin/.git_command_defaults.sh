@@ -5,6 +5,8 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 # shellcheck source=./.git_scripts_common_copy.sh
 source "${_SCRIPT_DIR}/.git_scripts_common_copy.sh"
+# shellcheck source=./.git_ci_types.sh
+source "${_SCRIPT_DIR}/.git_ci_types.sh"
 
 function use_git_pager_if_set() {
   local gitpager

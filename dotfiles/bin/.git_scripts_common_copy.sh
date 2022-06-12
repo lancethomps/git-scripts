@@ -239,6 +239,20 @@ function ask_user_for_input() {
   fi
   echo "$response"
 }
+function is_arg_present() {
+  local expected_arg arg
+
+  expected_arg="$1"
+  shift
+
+  for arg in "$@"; do
+    if test "${arg}" = "${expected_arg}"; then
+      return 0
+    fi
+  done
+
+  return 1
+}
 
 #dotfiles=os
 function get_terminal_columns() {

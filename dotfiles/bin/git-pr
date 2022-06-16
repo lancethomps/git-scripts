@@ -20,7 +20,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [--no-body] [--simple] [--to-ref <to_ref>]
+       ${_SCRIPT_NAME_GIT} [--no-body] [--no-open] [--simple] [--to-ref <to_ref>]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -46,6 +46,10 @@ while test $# -gt 0; do
       ;;
     --no-body)
       no_body=true
+      shift
+      ;;
+    --no-open)
+      no_open=true
       shift
       ;;
     --simple)
@@ -120,6 +124,8 @@ fi
 
 if check_debug; then
   echo "$pr_url"
-else
+elif ! check_true "${no_open-}"; then
   open "$pr_url"
+else
+  exit 0
 fi

@@ -44,6 +44,11 @@ GIT_BRANCH_REF_FORMATS=(
   '%(align:40)%(color:blue)%(authorname)%(color:reset)%(end)'
   '%(refname:short)'
 )
+GIT_BRANCH_REF_FORMATS_FULL=(
+  "${GIT_BRANCH_REF_FORMATS[@]}"
+  '%(contents:subject)'
+)
+
 GIT_BRANCH_REF_FORMAT=''
 for format in "${GIT_BRANCH_REF_FORMATS[@]}"; do
   if test -n "${GIT_BRANCH_REF_FORMAT:-}"; then
@@ -52,9 +57,17 @@ for format in "${GIT_BRANCH_REF_FORMATS[@]}"; do
   GIT_BRANCH_REF_FORMAT="${GIT_BRANCH_REF_FORMAT}${format}"
 done
 
+GIT_BRANCH_REF_FORMAT_FULL=''
+for format in "${GIT_BRANCH_REF_FORMATS_FULL[@]}"; do
+  if test -n "${GIT_BRANCH_REF_FORMAT_FULL:-}"; then
+    GIT_BRANCH_REF_FORMAT_FULL="${GIT_BRANCH_REF_FORMAT_FULL}%09"
+  fi
+  GIT_BRANCH_REF_FORMAT_FULL="${GIT_BRANCH_REF_FORMAT_FULL}${format}"
+done
+
 #GIT_TAG_REF_FORMAT="$(echo "$GIT_BRANCH_REF_FORMAT" | sed_ext 's/%\((authorname|committerdate|objectname)/%\(*\1/g')"
 GIT_TAG_REF_FORMAT="$GIT_BRANCH_REF_FORMAT"
-unset GIT_BRANCH_REF_FORMATS
+unset GIT_BRANCH_REF_FORMATS GIT_BRANCH_REF_FORMATS_FULL format
 export GIT_BRANCH_REF_FORMAT
 export GIT_TAG_REF_FORMAT
 

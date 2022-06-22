@@ -17,7 +17,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--all-branches] [--no-branch-arg] [--simple] [<for_each_ref_arg>...]
+       ${_SCRIPT_NAME} [--all-branches] [--full] [--no-branch-arg] [--simple] [<for_each_ref_arg>...]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -34,6 +34,10 @@ while test $# -gt 0; do
   case "$1" in
     --all-branches)
       all_branches=true
+      shift
+      ;;
+    --full)
+      full=true
       shift
       ;;
     --no-branch-arg)
@@ -69,6 +73,8 @@ fi
 
 if check_true "${simple-}"; then
   GIT_BRANCH_REF_FORMAT='%(refname:short)'
+elif check_true "${full-}"; then
+  GIT_BRANCH_REF_FORMAT="${GIT_BRANCH_REF_FORMAT_FULL}"
 fi
 
 git for-each-ref ${branch_args} "${PASSTHROUGH_ARGS[@]}" --sort=-committerdate --format="${GIT_BRANCH_REF_FORMAT}"

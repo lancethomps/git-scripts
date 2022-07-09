@@ -158,6 +158,14 @@ function log_with_title_sep_no_leading_blank_line() {
   echo "$@"
   log_sep
 }
+function log_and_run() {
+  log_with_title_sep_no_leading_blank_line "$(get_args_quoted "$@")" >&2
+  "$@"
+}
+function log_and_run_spaced() {
+  log_with_title_sep "$(get_args_quoted "$@")" >&2
+  "$@"
+}
 function exit_fatal() {
   local exit_code="${1-}"
   if test "$#" -le 1; then

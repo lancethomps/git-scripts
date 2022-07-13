@@ -154,3 +154,9 @@ for file in "${MODIFIED_FILES[@]}"; do
     cp -f "$source_file" "$dest_file"
   fi
 done
+
+if confirm "Checkout copied files now?"; then
+  git checkout "${MODIFIED_FILES[@]}"
+fi
+
+exit 0

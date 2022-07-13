@@ -3,12 +3,19 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
+ci_last_args=()
+
 ################################################################# FILTERARGS #####################################################################
 PASSTHROUGH_ARGS=()
 while test $# -gt 0; do
   case "$1" in
     --open)
       open=true
+      shift
+      ;;
+    --wait-until-found)
+      wait_until_found=true
+      ci_last_args+=(--wait-until-found)
       shift
       ;;
     *)
@@ -20,7 +27,7 @@ done
 ##################################################################################################################################################
 
 set -o pipefail
-build_url="$(git ci-last | jq --raw-output --exit-status '.url')"
+build_url="$(git ci-last "${ci_last_args[@]}" | jq --raw-output --exit-status '.url')"
 set +o pipefail
 
 echo "$build_url"

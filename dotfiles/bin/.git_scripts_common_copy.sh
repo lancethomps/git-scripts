@@ -166,6 +166,9 @@ function log_and_run_spaced() {
   log_with_title_sep "$(get_args_quoted "$@")" >&2
   "$@"
 }
+function log_stderr() {
+  echo "$@" >&2
+}
 function exit_fatal() {
   local exit_code="${1-}"
   if test "$#" -le 1; then

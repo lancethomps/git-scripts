@@ -1,23 +1,58 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
-if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
-# shellcheck source=./.git_command_defaults.sh
-source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
+set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-check_supported_ci_types "${CI_JENKINS}"
+git check-supported-ci-types jenkins
 
-# shellcheck source=.dotfiles/.jenkins_script_setup.sh disable=SC1091
-source "$DOTFILES/.jenkins_script_setup.sh"
+################################################################# FILTERARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    --wait-until-found)
+      wait_until_found=true
+      shift
+      ;;
+    --)
+      shift
+      PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
 
-job_url="$(get_job_url_from_repo)"
+api_url="$(git ci-last-url-shortcut)/api/json"
 
-api_url="${job_url}/lastBuild/api/json"
-api_response="$(curl --user "$(get_jenkins_basic_auth)" --silent "$api_url")"
+function output_response_check_valid() {
+  if ! echo "$1" | jq --sort-keys --exit-status; then
+    return 1
+  fi
+  return 0
+}
 
-if ! echo "$api_response" | jq --sort-keys --exit-status; then
-  echo "ERROR Problem with Jenkins response from ${api_url} - output below" >&2
-  echo "$api_response" >&2
+function get_api_response() {
+  if ! api_response="$(jenkins_curl "$api_url")" || test -z "${api_response-}" || ! output_response_check_valid "$api_response" >/dev/null 2>&1; then
+    if test "${wait_until_found-}" = "true"; then
+      echo "Last build URL not found, waiting to retry..." >&2
+      sleep 2
+      get_api_response
+      return $?
+    fi
+  fi
+  echo "$api_response"
+}
+
+api_response="$(get_api_response)"
+
+if ! output_response_check_valid "$api_response"; then
+  log_stderr "ERROR Problem with Jenkins response from ${api_url} - output below"
+  log_stderr "$api_response"
   exit 1
 fi
 

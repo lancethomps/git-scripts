@@ -3,9 +3,26 @@
 if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
 # shellcheck source=./.git_command_defaults.sh
 source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
+set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git check-supported-ci-types "${CI_JENKINS}"
+git check-supported-ci-types jenkins
 
-last_build_url="$(git ci-last-url --wait-until-found)"
-log_and_run jenkins_poll_build "$last_build_url" "$@"
+api_url="$(git ci-last-url-shortcut)/testReport/api/json"
+
+if check_debug; then
+  echo jenkins_curl "$api_url"
+  exit 0
+fi
+
+if ! tests_json="$(jenkins_curl "$api_url")" || test -z "${tests_json-}"; then
+  exit_fatal "Failed to pull tests: ${tests_json}"
+fi
+
+if test "$(echo "$tests_json" | jq '.failCount')" = "0"; then
+  echo "$tests_json" | jq -S '.suites = null'
+  log_stderr "FAILING TESTS ABOVE"
+else
+  echo "$tests_json" | jq -S
+  log_stderr "PASSED"
+fi

@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./.git_command_defaults.sh
+source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
+##################################################################################################################################################
+
+DD_BASE='https://app.datadoghq.com/ci/test-runs'
+
+function main() {
+  local dd_query=() dd_url last_build_json last_build_number
+
+  dd_query+=("@git.branch:\"$(git current-branch)\"")
+
+  if ! last_build_json="$(git ci-last)"; then
+    log_stderr "Couldn't pull last build, using branch only"
+  else
+    last_build_number="$(echo "$last_build_json" | jq -r '.number')"
+    dd_query+=("@ci.pipeline.number:${last_build_number}")
+  fi
+
+  dd_query+=("-@test.status:(pass OR skip)")
+
+  dd_url="${DD_BASE}?query=$(url_encode_py "$(join_by ' ' "${dd_query[@]}")")"
+
+  if check_debug; then
+    echo "$dd_url"
+  else
+    open "$dd_url"
+  fi
+}
+
+main "$@"

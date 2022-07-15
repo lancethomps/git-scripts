@@ -14,7 +14,7 @@ while test $# -gt 0; do
       shift
       ;;
     --wait-until-found)
-      wait_until_found=true
+      export wait_until_found=true
       ci_last_args+=(--wait-until-found)
       shift
       ;;

@@ -5,15 +5,110 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--major | --minor | --patch | --version <version>]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+
+EXAMPLES
+       ${_SCRIPT_NAME}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --major)
+      major=true
+      shift
+      ;;
+    --minor)
+      minor=true
+      shift
+      ;;
+    --patch)
+      patch=true
+      shift
+      ;;
+    --version)
+      shift
+      version="$1"
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1"
+      _usage
+      exit 1
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+declare -x last_tag next_tag
+
+function get_last_tag() {
+  if ! last_tag="$(git tags --simple | pcregrep '^v.*' | head -1 | sed -E 's/v//g')"; then
+    exit_fatal "Could not find last_tag: ${last_tag}"
+  fi
+
+  return 0
+}
+
+function get_next_tag() {
+  local bump_part="minor"
+
+  if test -n "${version-}"; then
+    next_tag="$version"
+    return 0
+  fi
+
+  if check_true "${major-}"; then
+    bump_part="major"
+  elif check_true "${minor-}"; then
+    bump_part="minor"
+  elif check_true "${patch-}"; then
+    bump_part="patch"
+  fi
+
+  if ! next_tag="$(semver_bump --part "${bump_part}" "$last_tag")"; then
+    exit_fatal "Could not create next_tag: ${next_tag}"
+  fi
+
+  return 0
+}
+
 function main() {
-  local last_tag next_tag gh_args
+  local gh_args
 
   git fetch --tags
   log_with_title_sep "TAGS"
-  git --no-pager tags refs/tags/v
+  git --no-pager tags
 
-  last_tag="$(git tags --simple | pcregrep '^v.*' | head -1 | sed -E 's/v//g')"
-  next_tag="$(semver_bump --part "${1:-minor}" "$last_tag")"
+  get_last_tag
+  get_next_tag
   gh_args=(release create "v${next_tag}" --generate-notes)
 
   if confirm_with_auto "Release tag version (${last_tag} -> ${next_tag}) via 'gh ${gh_args[*]}'?"; then

@@ -4,7 +4,7 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 if ! default_branch_full="$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null)"; then
-  echo "master"
+  echo "main"
   exit 0
 fi
 

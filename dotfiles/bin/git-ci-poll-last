@@ -5,7 +5,13 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
-git check-supported-ci-types "${CI_JENKINS}"
+function run_github() {
+  log_and_run gh run watch --exit-status "$@"
+}
 
-last_build_url="$(git ci-last-url --wait-until-found)"
-log_and_run jenkins_poll_build "$last_build_url" "$@"
+function run_jenkins() {
+  log_and_run jenkins_poll_build "$(git ci-last-url --wait-until-found)" "$@"
+}
+
+git check-supported-ci-types "${CI_GITHUB}" "${CI_JENKINS}"
+"run_$(git ci-type)" "$@"

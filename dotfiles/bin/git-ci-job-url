@@ -5,20 +5,20 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
-function get_url_travis() {
+function run_travis() {
   echo "https://app.travis-ci.com/$(git ui-url-project)/$(git ui-url-repo)"
 }
 
-function get_url_github() {
+function run_github() {
   echo "$(git ui-url-root)/actions"
 }
 
-function get_url_jenkins() {
+function run_jenkins() {
   # shellcheck source=.dotfiles/.jenkins_script_setup.sh disable=SC1091
   source "$DOTFILES/.jenkins_script_setup.sh"
 
   get_job_url_from_repo
 }
 
-check_supported_ci_types "${CI_GITHUB}" "${CI_JENKINS}" "${CI_TRAVIS}"
-"get_url_$(git ci-type)"
+git check-supported-ci-types "${CI_GITHUB}" "${CI_JENKINS}" "${CI_TRAVIS}"
+"run_$(git ci-type)" "$@"

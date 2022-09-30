@@ -290,11 +290,12 @@ function longest_line_length() {
   echo "${str-}" | awk 'length > max_length { max_length = length; longest_line = $0 } END { print max_length }'
 }
 function join_by() {
-  local d="$1"
+  local delim="${1//\&/\\&}"
   shift
+
   echo -n "$1"
   shift
-  printf "%s" "${@/#/$d}"
+  printf "%s" "${@/#/$delim}"
 }
 function join_by_with_end() {
   join_by "$@"

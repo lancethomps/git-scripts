@@ -108,6 +108,8 @@ function github_url() {
     fi
   fi
 
+  log_debug_or_verbose "query_params ${query_params[*]}" >&2
+
   echo "${url_base}?quick_pull=1&$(join_by "&" "${query_params[@]}")"
 }
 

@@ -17,11 +17,12 @@ if ! test -s "$blacklist_file"; then
 fi
 
 function join_by() {
-  local d="$1"
+  local delim="${1//\&/\\&}"
   shift
+
   echo -n "$1"
   shift
-  printf "%s" "${@/#/$d}"
+  printf "%s" "${@/#/$delim}"
 }
 
 mapfile -t blacklisted_patterns < <(grep -Ev "^\s*#" "$blacklist_file")

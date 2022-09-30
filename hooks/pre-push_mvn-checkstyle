@@ -4,11 +4,12 @@ set -o errexit -o errtrace -o nounset -o pipefail
 ##################################################################################################################################################
 
 function join_by() {
-  local d="$1"
+  local delim="${1//\&/\\&}"
   shift
+
   echo -n "$1"
   shift
-  printf "%s" "${@/#/$d}"
+  printf "%s" "${@/#/$delim}"
 }
 
 mapfile -t outgoing_files < <(git outgoing-commits-files | grep -Ev 'pom.xml$')

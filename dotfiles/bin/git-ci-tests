@@ -19,10 +19,10 @@ if ! tests_json="$(jenkins_curl "$api_url")" || test -z "${tests_json-}"; then
   exit_fatal "Failed to pull tests: ${tests_json}"
 fi
 
+echo "$tests_json" | jq -S '.suites = null'
 if test "$(echo "$tests_json" | jq '.failCount')" = "0"; then
-  echo "$tests_json" | jq -S '.suites = null'
-  log_stderr "FAILING TESTS ABOVE"
-else
-  echo "$tests_json" | jq -S
   log_stderr "PASSED"
+else
+  echo "$tests_json" | jq -S '[.suites[].cases[] | select(.status == "FAILED")]'
+  log_stderr "FAILING TESTS ABOVE"
 fi

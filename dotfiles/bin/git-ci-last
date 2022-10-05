@@ -27,7 +27,7 @@ while test $# -gt 0; do
 done
 ##################################################################################################################################################
 
-api_url="$(git ci-last-url-shortcut)/api/json"
+api_url="$(git ci-last-url-shortcut "${PASSTHROUGH_ARGS[@]}")/api/json"
 
 function output_response_check_valid() {
   if ! echo "$1" | jq --sort-keys --exit-status; then

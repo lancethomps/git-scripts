@@ -5,24 +5,32 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
-function has_build_params() {
-  local job_url="$1"
-
-  jenkins_curl "${job_url}/api/json" --silent | pcregrep -q '"hudson.model.ParametersDefinitionProperty"'
-}
+PR_FIELDS=(
+  author
+  baseRefName
+  createdAt
+  deletions
+  headRefName
+  headRepository
+  headRepositoryOwner
+  id
+  isCrossRepository
+  isDraft
+  labels
+  mergeStateStatus
+  mergeable
+  milestone
+  number
+  reviews
+  state
+  statusCheckRollup
+  title
+  updatedAt
+  url
+)
 
 function main() {
-  local job_url api_url
-  git check-supported-ci-types "${CI_JENKINS}"
-
-  job_url="$(git ci-job-url "$@")"
-  if has_build_params "$job_url"; then
-    api_url="${job_url}/buildWithParameters?delay=0sec"
-  else
-    api_url="${job_url}/build?delay=0sec"
-  fi
-
-  log_and_run jenkins_curl "$api_url" -X POST
+  gh pr list --head "$(git current-branch)" --json "$(join_by ',' "${PR_FIELDS[@]}")" "$@"
 }
 
 main "$@"

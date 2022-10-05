@@ -9,13 +9,28 @@ ci_last_args=()
 PASSTHROUGH_ARGS=()
 while test $# -gt 0; do
   case "$1" in
+    --branch)
+      export JOB_URL_TYPE=branch
+      ci_last_args+=("$1")
+      shift
+      ;;
+    --pr)
+      export JOB_URL_TYPE=pr
+      ci_last_args+=("$1")
+      shift
+      ;;
+    --tag)
+      export JOB_URL_TYPE=tag
+      ci_last_args+=("$1")
+      shift
+      ;;
     --open)
       open=true
       shift
       ;;
     --wait-until-found)
       export wait_until_found=true
-      ci_last_args+=(--wait-until-found)
+      ci_last_args+=("$1")
       shift
       ;;
     *)

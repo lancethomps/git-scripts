@@ -8,7 +8,7 @@ set -o errexit -o errtrace -o nounset
 
 git check-supported-ci-types jenkins
 
-api_url="$(git ci-last-url-shortcut)/testReport/api/json"
+api_url="$(git ci-last-url-shortcut "$@")/testReport/api/json"
 
 if check_debug; then
   echo jenkins_curl "$api_url"

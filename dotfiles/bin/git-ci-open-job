@@ -3,7 +3,62 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-job_url="$(git ci-job-url)"
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--branch | --pr | --tag] [<passthrough_arg>...]
+       ${SYNOP_INDENT} [--help]
+
+EXAMPLES
+       ${_SCRIPT_NAME}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --branch)
+      export JOB_URL_TYPE=branch
+      shift
+      ;;
+    --pr)
+      export JOB_URL_TYPE=pr
+      shift
+      ;;
+    --tag)
+      export JOB_URL_TYPE=tag
+      shift
+      ;;
+    --)
+      shift
+      PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+job_url="$(git ci-job-url "${PASSTHROUGH_ARGS[@]}")"
 
 if check_debug; then
   echo "${job_url}"

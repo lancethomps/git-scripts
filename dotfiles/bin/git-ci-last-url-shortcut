@@ -5,4 +5,4 @@ set -o errexit -o errtrace -o nounset
 
 git check-supported-ci-types jenkins
 
-echo "$(git ci-job-url)/lastBuild"
+echo "$(git ci-job-url "$@")/lastBuild"

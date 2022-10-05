@@ -3,12 +3,4 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git check-supported-ci-types jenkins
-
-api_url="$(git ci-last-url-shortcut "$@")/consoleText"
-
-if check_debug; then
-  echo jenkins_curl "$api_url"
-else
-  jenkins_curl "$api_url"
-fi
+git prs "$@" | jq --exit-status -r '.[].number'

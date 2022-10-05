@@ -5,6 +5,63 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
+git check-supported-ci-types "${CI_GITHUB}" "${CI_JENKINS}"
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--branch | --pr | --tag] [<passthrough_arg>...]
+       ${SYNOP_INDENT} [--help]
+
+EXAMPLES
+       ${_SCRIPT_NAME}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --branch)
+      export JOB_URL_TYPE=branch
+      shift
+      ;;
+    --pr)
+      export JOB_URL_TYPE=pr
+      shift
+      ;;
+    --tag)
+      export JOB_URL_TYPE=tag
+      shift
+      ;;
+    --)
+      shift
+      PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
 function run_github() {
   log_and_run gh run watch --exit-status "$@"
 }
@@ -13,5 +70,4 @@ function run_jenkins() {
   log_and_run jenkins_poll_build "$(git ci-last-url --wait-until-found)" "$@"
 }
 
-git check-supported-ci-types "${CI_GITHUB}" "${CI_JENKINS}"
-"run_$(git ci-type)" "$@"
+"run_$(git ci-type)" "${PASSTHROUGH_ARGS[@]}"

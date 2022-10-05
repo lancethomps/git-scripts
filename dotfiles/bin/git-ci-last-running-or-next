@@ -11,6 +11,18 @@ while test $# -gt 0; do
       open=true
       shift
       ;;
+    --branch)
+      export JOB_URL_TYPE=branch
+      shift
+      ;;
+    --pr)
+      export JOB_URL_TYPE=pr
+      shift
+      ;;
+    --tag)
+      export JOB_URL_TYPE=tag
+      shift
+      ;;
     *)
       PASSTHROUGH_ARGS+=("$1")
       shift

@@ -1,16 +1,32 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
 if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
-# shellcheck source=./.git_command_defaults.sh
-source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
+set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 export GREP_OPTIONS=
 flags='g'
 
-if ! git in-repo; then
+if command -v git-in-repo >/dev/null 2>&1 && ! git in-repo; then
   exit_fatal "Not in a git repo"
 fi
+
+if test "$(uname)" = "Darwin"; then
+  if command -v gsed >/dev/null 2>&1; then
+    export _sed_ext_in_place='gsed -i -r'
+    export _sed_ext='gsed -r'
+  else
+    export _sed_ext_in_place='/usr/bin/sed -i "" -E'
+    export _sed_ext='/usr/bin/sed -E'
+  fi
+else
+  export _sed_ext_in_place='sed -r -i'
+  export _sed_ext='sed -r'
+fi
+# shellcheck disable=SC2139
+alias sed_ext_in_place="${_sed_ext_in_place}"
+# shellcheck disable=SC2139
+alias sed_ext="${_sed_ext}"
 
 ################################################################### USAGE ########################################################################
 _SCRIPT_NAME="$(basename "$0")"
@@ -79,36 +95,50 @@ while test $# -gt 0; do
 done
 ##################################################################################################################################################
 
-all="${search-}${replacement-}${flags-}"
-case "$all" in
-  */*)
-    ascii="$(for ((i = 32; i <= 127; i++)); do printf '%b' "\\$(printf '%03o' "$i")"; done)"
-    sep="$(printf '%s' "$ascii" | tr -d "$all")"
-    sep="$(printf %.1s "$sep")"
-    if [ "X$sep" = "X" ]; then
-      echo 'could not find an unused character for sed separator character'
-      exit 1
-    fi
-    ;;
-  *)
-    sep=/
-    ;;
-esac
+function check_debug() {
+  test "${debug_mode-}" = "true"
+}
 
-# shellcheck disable=SC2015
-r="$(xargs -r false </dev/null >/dev/null 2>&1 && echo r || true)"
+function check_verbose() {
+  test "${verbose-}" = "true"
+}
 
-git_grep_args=(-c grep.fullname=false grep -lz "${PASSTHROUGH_ARGS[@]}" "${search-}" "${END_ARGS[@]}")
-# shellcheck disable=SC2206
-xargs_args=(-0"$r" ${_sed_ext_in_place:?} "s$sep${search-}$sep${replacement-}$sep${flags-}")
+function main() {
+  local all ascii sep r git_grep_args xargs_args
 
-if check_debug || check_verbose; then
-  echo "COMMAND"
-  log_with_sep_around "git ${git_grep_args[*]} | xargs ${xargs_args[*]}"
-fi
+  all="${search-}${replacement-}${flags-}"
+  case "$all" in
+    */*)
+      ascii="$(for ((i = 32; i <= 127; i++)); do printf '%b' "\\$(printf '%03o' "$i")"; done)"
+      sep="$(printf '%s' "$ascii" | tr -d "$all")"
+      sep="$(printf %.1s "$sep")"
+      if [ "X$sep" = "X" ]; then
+        echo 'could not find an unused character for sed separator character'
+        exit 1
+      fi
+      ;;
+    *)
+      sep=/
+      ;;
+  esac
 
-if check_debug; then
-  exit 0
-fi
+  # shellcheck disable=SC2015
+  r="$(xargs -r false </dev/null >/dev/null 2>&1 && echo r || true)"
 
-git "${git_grep_args[@]}" | xargs "${xargs_args[@]}"
+  git_grep_args=(-c grep.fullname=false grep -lz "${PASSTHROUGH_ARGS[@]}" "${search-}" "${END_ARGS[@]}")
+  # shellcheck disable=SC2206
+  xargs_args=(-0"$r" ${_sed_ext_in_place:?} "s$sep${search-}$sep${replacement-}$sep${flags-}")
+
+  if check_debug || check_verbose; then
+    echo "COMMAND"
+    echo "git ${git_grep_args[*]} | xargs ${xargs_args[*]}"
+  fi
+
+  if check_debug; then
+    exit 0
+  fi
+
+  git "${git_grep_args[@]}" | xargs "${xargs_args[@]}"
+}
+
+main "$@"

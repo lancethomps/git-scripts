@@ -1,36 +1,6 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
-if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
-# shellcheck source=./.git_command_defaults.sh
-source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
+set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-PR_FIELDS=(
-  author
-  baseRefName
-  createdAt
-  deletions
-  headRefName
-  headRepository
-  headRepositoryOwner
-  id
-  isCrossRepository
-  isDraft
-  labels
-  mergeStateStatus
-  mergeable
-  milestone
-  number
-  reviews
-  state
-  statusCheckRollup
-  title
-  updatedAt
-  url
-)
-
-function main() {
-  gh pr list --head "$(git current-branch)" --json "$(join_by ',' "${PR_FIELDS[@]}")" "$@"
-}
-
-main "$@"
+git prs-all --head "$(git current-branch)" "$@"

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./.git_command_defaults.sh
+source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
+##################################################################################################################################################
+
+if test -n "${1-}"; then
+  TAG_NAME="$1"
+  shift
+else
+  TAG_NAME="$(git select-tag)"
+fi
+
+function main() {
+  log_and_run git tag --force "$@" "$TAG_NAME"
+  log_and_run git push --tags --force "$@" origin "$TAG_NAME"
+}
+
+main "$@"

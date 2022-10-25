@@ -56,7 +56,8 @@ _create_wrapped_git_completion branch \
   diff-to-branch-files \
   diff-to-branch-fzf \
   merge-branch-fzf \
-  pr
+  pr \
+  update-tag
 
 _create_wrapped_git_completion grep \
   grep-bash \

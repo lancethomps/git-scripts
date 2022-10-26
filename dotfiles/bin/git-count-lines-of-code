@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local _SCRIPT_NAME_GIT
+  _SCRIPT_NAME_GIT="${_SCRIPT_NAME/git-/git }"
+
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME_GIT}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME_GIT} [--cd-to-git-base-dir] [<cloc_arg>...]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+
+EXAMPLES
+       ${_SCRIPT_NAME_GIT}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --)
+      shift
+      PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+function check_cloc() {
+  if ! command -v cloc >/dev/null 2>&1; then
+    brew install cloc
+  fi
+
+  return 0
+}
+
+function cd_to_git_base_dir_if_needed() {
+  if test "${cd_to_git_base_dir-}" = "true"; then
+    cd "$(git base-dir)"
+  fi
+
+  return 0
+}
+
+function main() {
+  check_cloc
+  cd_to_git_base_dir_if_needed
+  cloc "$@" --by-file-by-lang --git HEAD
+}
+
+main "${PASSTHROUGH_ARGS[@]}"

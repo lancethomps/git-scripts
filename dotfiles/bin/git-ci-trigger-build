@@ -5,10 +5,68 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
+build_params=()
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--param | -p <param>] [<passthrough_arg>...]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+
+EXAMPLES
+       ${_SCRIPT_NAME}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --param | -p)
+      shift
+      build_params+=("$1")
+      shift
+      ;;
+    --)
+      shift
+      PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
 function has_build_params() {
   local job_url="$1"
 
-  jenkins_curl "${job_url}/api/json" --silent | pcregrep -q '"hudson.model.ParametersDefinitionProperty"'
+  debug_mode=false jenkins_curl "${job_url}/api/json" --silent | pcregrep -q '"hudson.model.ParametersDefinitionProperty"'
 }
 
 function main() {
@@ -22,7 +80,11 @@ function main() {
     api_url="${job_url}/build?delay=0sec"
   fi
 
+  if test "${#build_params[@]}" -ne 0; then
+    api_url="${api_url}&$(join_by '&' "${build_params[@]}")"
+  fi
+
   log_and_run jenkins_curl "$api_url" -X POST
 }
 
-main "$@"
+main "${PASSTHROUGH_ARGS[@]}"

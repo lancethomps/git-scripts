@@ -34,6 +34,16 @@ function urlencode_git_current_branch() {
   url_encode_py "${current_branch}" "/"
 }
 
+function jenkins_curl() {
+  local curl_args=(--user "${JENKINS_USER_ID}:${JENKINS_API_TOKEN}" --silent "$@")
+
+  if check_debug; then
+    echo curl "${curl_args[@]}"
+  else
+    curl "${curl_args[@]}"
+  fi
+}
+
 if test -z "${GIT_BRANCH_SKIP_REGEX-}"; then
   export GIT_BRANCH_SKIP_REGEX='[[:space:]]((origin/)?(master|main|mature|HEAD|develop)$|origin/pr/)'
 fi

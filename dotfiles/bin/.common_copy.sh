@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
 shopt -s expand_aliases
-set -o errexit -o errtrace -o nounset
+set -o errtrace
 ##################################################################################################################################################
+
+if ! command -v gsed >/dev/null 2>&1; then
+  if test "$(uname)" = "Darwin"; then
+    echo "gsed not found, running: brew install gsed"
+    brew install gsed
+  else
+    alias gsed='sed'
+  fi
+fi
 
 function check_command() {
   if command -v "$@" >/dev/null 2>&1; then
@@ -11,36 +20,6 @@ function check_command() {
     return 1
   fi
 }
-
-if test "$(uname)" = "Darwin"; then
-  if check_command gsed; then
-    export _sed_ext_in_place='gsed -i -r'
-    export _sed_ext='gsed -r'
-  else
-    export _sed_ext_in_place='/usr/bin/sed -i "" -E'
-    export _sed_ext='/usr/bin/sed -E'
-  fi
-else
-  export _sed_ext_in_place='sed -r -i'
-  export _sed_ext='sed -r'
-fi
-# shellcheck disable=SC2139
-alias sed_ext_in_place="${_sed_ext_in_place}"
-# shellcheck disable=SC2139
-alias sed_ext="${_sed_ext}"
-
-if ! check_command realpath; then
-  if check_command grealpath; then
-    function shell_realpath() { grealpath "$@"; }
-  elif check_command greadlink; then
-    function shell_realpath() { greadlink -f "$@"; }
-  else
-    function shell_realpath() { echo "$@"; }
-  fi
-else
-  function shell_realpath() { realpath "$@"; }
-fi
-
 function confirm() {
   local response=""
   read -r -p "${1:-Are you sure?}"$'\n'"[Y/n]> " response
@@ -58,7 +37,7 @@ function is_auto_confirm() {
 }
 function confirm_with_auto() {
   if is_auto_confirm; then
-    echo "AUTO CONFIRMED: ${1:-}"
+    echo "AUTO CONFIRMED: ${1-}"
     return 0
   fi
   confirm "$@"
@@ -77,10 +56,10 @@ function log_verbose() {
   return 0
 }
 function check_verbose() {
-  check_true "${verbose:-}"
+  check_true "${verbose-}"
 }
 function check_debug() {
-  check_true "${debug_mode:-}"
+  check_true "${debug_mode-}"
 }
 function exit_if_debug() {
   if check_debug; then
@@ -90,14 +69,14 @@ function exit_if_debug() {
   return 0
 }
 function check_not_debug() {
-  check_true "${debug_mode:-}" && return 1 || return 0
+  check_true "${debug_mode-}" && return 1 || return 0
 }
 function check_true() {
-  if test -z "${1:-}"; then
+  if test -z "${1-}"; then
     return 1
   fi
   local val="${1,,}"
-  test "$val" = "true" && return 0 || test "$val" = "1" && return 0 || test "$val" = "yes" && return 0 || test "$val" = "y" && return 0 || return 1
+  test "${val}" = "true" && return 0 || test "${val}" = "1" && return 0 || test "${val}" = "yes" && return 0 || test "${val}" = "y" && return 0 || return 1
 }
 function check_not_true() {
   if check_true "$@"; then
@@ -107,11 +86,11 @@ function check_not_true() {
   fi
 }
 function check_false() {
-  if test -z "$1"; then
+  if test -z "${1-}"; then
     return 1
   fi
   local val="${1,,}"
-  test "$val" = "false" && return 0 || test "$val" = "0" && return 0 || test "$val" = "no" && return 0 || test "$val" = "n" && return 0 || return 1
+  test "${val}" = "false" && return 0 || test "${val}" = "0" && return 0 || test "${val}" = "no" && return 0 || test "${val}" = "n" && return 0 || return 1
 }
 function check_not_false() {
   if check_false "$@"; then
@@ -125,7 +104,7 @@ function repeat_char() {
 }
 function get_sep_cols() {
   local sep_cols=160 term_cols
-  if check_command 'get_terminal_columns'; then
+  if check_command get_terminal_columns; then
     term_cols="$(get_terminal_columns)"
     if test -n "$term_cols"; then
       sep_cols="$term_cols"
@@ -137,9 +116,9 @@ function get_sep_cols() {
   echo -n "$sep_cols"
 }
 function log_sep() {
-  if test -z "${TERMINAL_SEP:-}"; then
+  if test -z "${TERMINAL_SEP-}"; then
     local rep_count
-    rep_count=$(get_sep_cols 2)
+    rep_count="$(get_sep_cols 2)"
     TERMINAL_SEP="$(repeat_char '-' "$rep_count")"
     export TERMINAL_SEP
   fi
@@ -164,6 +143,10 @@ function log_and_run() {
 }
 function log_and_run_spaced() {
   log_with_title_sep "$(get_args_quoted "$@")" >&2
+  "$@"
+}
+function log_and_run_no_sep() {
+  echo "$(get_args_quoted "$@")" >&2
   "$@"
 }
 function log_verbose_and_run() {
@@ -197,7 +180,7 @@ function exit_fatal() {
   else
     shift
   fi
-  echo "[FATAL] $*"
+  echo FATAL "$@"
   exit "$exit_code"
 }
 function return_fatal() {
@@ -207,25 +190,28 @@ function return_fatal() {
   else
     shift
   fi
-  echo "[FATAL] $*"
+  echo FATAL "$@"
   return "$exit_code"
 }
 
-#dotfiles=opts
 # shellcheck disable=SC2120
 function should_use_pager() {
-  if test -n "${use_pager:-}"; then
-    if check_true "$use_pager"; then
+  if test -n "${use_pager-}"; then
+    if check_true "${use_pager-}"; then
       return 0
     else
       return 1
     fi
   fi
-  if test "${1:-}" = '--no-pager'; then
-    return 1
-  elif test "${1:-}" = '--pager'; then
-    return 0
-  elif test -z "${PAGER:-}"; then
+  local arg
+  for arg in "$@"; do
+    if test "${arg}" = '--no-pager'; then
+      return 1
+    elif test "${arg}" = '--pager'; then
+      return 0
+    fi
+  done
+  if test -z "${PAGER-}"; then
     return 1
   elif ! test -t 1; then
     return 1
@@ -233,15 +219,14 @@ function should_use_pager() {
   return 0
 }
 function get_args_quoted() {
-  if test -z "${1:-}"; then
+  if test -z "${1-}"; then
     return 1
   fi
-  local var
-  local all_args=''
+  local var all_args=''
   for var in "$@"; do
     if [[ $var =~ ^[\-_=/~a-zA-Z0-9]+$ ]] || [[ $var =~ ^[a-zA-Z0-9_]+= ]]; then
-      if [ -z "$all_args" ]; then
-        all_args="$var"
+      if test -z "${all_args-}"; then
+        all_args="${var}"
       else
         all_args="$all_args $var"
       fi
@@ -249,27 +234,27 @@ function get_args_quoted() {
       var="${var//\\/\\\\}"
       var="${var//\"/\\\"}"
       if test -n "${ESCAPE_VALS-}"; then
-        var="$(echo "$var" | sed -E "s/([$ESCAPE_VALS])/\\\\\1/g")"
+        var="$(echo "${var}" | sed -E "s/([$ESCAPE_VALS])/\\\\\1/g")"
       fi
-      if [ -z "$all_args" ]; then
+      if test -z "${all_args}"; then
         all_args="\"$var\""
       else
         all_args="$all_args \"$var\""
       fi
     fi
   done
-  echo "$all_args"
+  echo "${all_args}"
 }
 function ask_user_for_input() {
   local response allow_empty
   allow_empty="${2:-false}"
   read -r -p "${1:-Please input a value.}"$'\n'"> " response
-  if test -z "$response" && ! check_true "$allow_empty"; then
+  if test -z "${response-}" && test "${allow_empty-}" != "true"; then
     echo "No value entered, please try again."
     ask_user_for_input "$@"
     return $?
   fi
-  echo "$response"
+  echo "${response-}"
 }
 function is_arg_present() {
   local expected_arg arg
@@ -286,26 +271,24 @@ function is_arg_present() {
   return 1
 }
 
-#dotfiles=os
 function get_terminal_columns() {
-  if [ -z "${COLUMNS-}" ]; then
-    COLUMNS="$(stty -a | head -1 | command grep -ioE 'columns [0-9]+' | sed -E 's/[^0-9]//g')"
-    if [ -z "$COLUMNS" ]; then
-      COLUMNS="$(stty -a | head -1 | command grep -ioE '[0-9]+ columns' | sed -E 's/[^0-9]//g')"
+  if test -z "${COLUMNS-}"; then
+    COLUMNS="$(stty -a 2>/dev/null | head -1 | command grep -ioE 'columns [0-9]+' | sed -E 's/[^0-9]//g')"
+    if test -z "${COLUMNS-}"; then
+      COLUMNS="$(stty -a 2>/dev/null | head -1 | command grep -ioE '[0-9]+ columns' | sed -E 's/[^0-9]//g')"
     fi
     export COLUMNS
   fi
-  echo -n "$COLUMNS"
+  echo -n "${COLUMNS}"
 }
 
-#dotfiles=string
 function longest_line_length() {
   local str
   if ! test -t 0; then
     str="$(cat)"
   else
     for val in "${@}"; do
-      str="${str:-}${val}"$'\n'
+      str="${str-}${val}"$'\n'
     done
   fi
   echo "${str-}" | awk 'length > max_length { max_length = length; longest_line = $0 } END { print max_length }'
@@ -333,7 +316,6 @@ function join_by_regex_or() {
   echo "($(join_by '|' "$@"))"
 }
 
-#dotfiles=web
 function url_encode_py() {
   python -c '
 import sys

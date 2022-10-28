@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
 if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
-# shellcheck source=./.git_command_defaults.sh
-source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
+# shellcheck source=./.command_defaults.sh
+source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
 HOOKS_PATH="$(git config core.hooksPath || echo "hooks")"
@@ -12,7 +12,7 @@ else
   INSTALL_TO_HOOKS_DIR="$(git rev-parse --absolute-git-dir)/${HOOKS_PATH}"
 fi
 
-HOOKS_DIR="$(shell_realpath "${_SCRIPT_DIR}/../../hooks")"
+HOOKS_DIR="$(realpath "${_SCRIPT_DIR}/../../hooks")"
 function list_hooks() {
   find "$HOOKS_DIR" -type f -not -name '.*' -perm +111 -exec basename {} \; | sort
 }

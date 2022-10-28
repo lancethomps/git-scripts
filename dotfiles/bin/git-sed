@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
-if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
@@ -11,22 +10,14 @@ if command -v git-in-repo >/dev/null 2>&1 && ! git in-repo; then
   exit_fatal "Not in a git repo"
 fi
 
-if test "$(uname)" = "Darwin"; then
-  if command -v gsed >/dev/null 2>&1; then
-    export _sed_ext_in_place='gsed -i -r'
-    export _sed_ext='gsed -r'
+if ! command -v gsed > /dev/null 2>&1; then
+  if test "$(uname)" = "Darwin"; then
+    echo "gsed not found, running: brew install gsed"
+    brew install gsed
   else
-    export _sed_ext_in_place='/usr/bin/sed -i "" -E'
-    export _sed_ext='/usr/bin/sed -E'
+    alias gsed='sed'
   fi
-else
-  export _sed_ext_in_place='sed -r -i'
-  export _sed_ext='sed -r'
 fi
-# shellcheck disable=SC2139
-alias sed_ext_in_place="${_sed_ext_in_place}"
-# shellcheck disable=SC2139
-alias sed_ext="${_sed_ext}"
 
 ################################################################### USAGE ########################################################################
 _SCRIPT_NAME="$(basename "$0")"
@@ -127,7 +118,7 @@ function main() {
 
   git_grep_args=(-c grep.fullname=false grep -lz "${PASSTHROUGH_ARGS[@]}" "${search-}" "${END_ARGS[@]}")
   # shellcheck disable=SC2206
-  xargs_args=(-0"$r" ${_sed_ext_in_place:?} "s$sep${search-}$sep${replacement-}$sep${flags-}")
+  xargs_args=(-0"$r" gsed -i -r "s$sep${search-}$sep${replacement-}$sep${flags-}")
 
   if check_debug || check_verbose; then
     echo "COMMAND"

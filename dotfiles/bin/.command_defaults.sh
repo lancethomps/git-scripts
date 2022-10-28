@@ -3,8 +3,8 @@
 shopt -s expand_aliases
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
-# shellcheck source=./.git_scripts_common_copy.sh
-source "${_SCRIPT_DIR}/.git_scripts_common_copy.sh"
+# shellcheck source=./.common_copy.sh
+source "${_SCRIPT_DIR}/.common_copy.sh"
 # shellcheck source=./.git_ci_types.sh
 source "${_SCRIPT_DIR}/.git_ci_types.sh"
 
@@ -75,7 +75,6 @@ for format in "${GIT_BRANCH_REF_FORMATS_FULL[@]}"; do
   GIT_BRANCH_REF_FORMAT_FULL="${GIT_BRANCH_REF_FORMAT_FULL}${format}"
 done
 
-#GIT_TAG_REF_FORMAT="$(echo "$GIT_BRANCH_REF_FORMAT" | sed_ext 's/%\((authorname|committerdate|objectname)/%\(*\1/g')"
 GIT_TAG_REF_FORMAT="$GIT_BRANCH_REF_FORMAT"
 unset GIT_BRANCH_REF_FORMATS GIT_BRANCH_REF_FORMATS_FULL format
 export GIT_BRANCH_REF_FORMAT

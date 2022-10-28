@@ -6,8 +6,8 @@ export CI_TRAVIS=travis
 
 function check_supported_ci_types() {
   if ! command -v is_arg_present >/dev/null 2>&1; then
-    # shellcheck source=./.git_scripts_common_copy.sh
-    source "${_SCRIPT_DIR}/.git_scripts_common_copy.sh" || exit 1
+    # shellcheck source=./.common_copy.sh
+    source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
   fi
 
   if ! is_arg_present "$(git ci-type)" "$@"; then

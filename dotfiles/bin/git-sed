@@ -10,7 +10,7 @@ if command -v git-in-repo >/dev/null 2>&1 && ! git in-repo; then
   exit_fatal "Not in a git repo"
 fi
 
-if ! command -v gsed > /dev/null 2>&1; then
+if ! command -v gsed >/dev/null 2>&1; then
   if test "$(uname)" = "Darwin"; then
     echo "gsed not found, running: brew install gsed"
     brew install gsed

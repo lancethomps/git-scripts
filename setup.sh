@@ -6,7 +6,7 @@ source "${_SCRIPT_DIR}/dotfiles/bin/.common_copy.sh" || exit 1
 ##################################################################################################################################################
 
 function install_brew() {
-  BREW_FORMULAS=(
+  local BREW_FORMULAS=(
     coreutils
     fzf
     gawk
@@ -23,6 +23,13 @@ function install_brew() {
   log_and_run brew install "${BREW_FORMULAS[@]}"
 }
 
+function install_jenkins_scripts() {
+  if ! command -v jenkins_curl >/dev/null 2>&1; then
+    echo "It is highly recommended to also setup https://github.com/lancethomps/jenkins-scripts if you plan on using the Jenkins scripts in this repo."
+  fi
+  return 0
+}
+
 function finish_setup() {
   echo "To finish setup, add the dotfiles/bin directory to your PATH. You will most likely want to put that in your .bash_profile."
   echo "export PATH=\"\${PATH}:${_SCRIPT_DIR}/dotfiles/bin\""
@@ -30,6 +37,7 @@ function finish_setup() {
 
 function main() {
   install_brew
+  install_jenkins_scripts
   finish_setup
 }
 

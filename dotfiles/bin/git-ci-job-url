@@ -71,10 +71,7 @@ function run_github() {
 }
 
 function run_jenkins() {
-  # shellcheck source=.dotfiles/.jenkins_script_setup.sh disable=SC1091
-  source "$DOTFILES/.jenkins_script_setup.sh"
-
-  get_job_url_from_repo "$@"
+  jenkins_job_url_from_repo "$@"
 }
 
 "run_$(git ci-type)" "${PASSTHROUGH_ARGS[@]}"

@@ -1,27 +1,7 @@
-########################################################
-# Custom Settings
-########################################################
-mac/terminal/profiles/*.json
-mac/terminal/windowgroups/*.json
-
-
-############################
-# IDEs
-############################
-
-## Eclipse
-.classpath
-.project
-.settings/
-/bin/
-
-## NetBeans
-/nbproject/
-
-## Visual Studio Code
+# Visual Studio Code
 .vscode/.ropeproject/
 
-## IntelliJ Idea
+# IntelliJ Idea
 .idea/*
 !.idea/runConfigurations/
 !.idea/scopes/
@@ -29,38 +9,6 @@ mac/terminal/windowgroups/*.json
 *.iml
 *.ipr
 *.iws
-checkstyle-cachefile
-out/
-
-############################
-# OSes
-############################
 
 # macOS
 .DS_Store
-
-############################
-# Languages
-############################
-
-## Python
-*.egg-info
-*.pyc
-
-############################
-# Libraries
-############################
-
-## Maven
-target/
-
-## npm
-/node_modules
-
-############################
-# Misc
-############################
-**/.ant-targets-build.xml
-*~
-/.cache-*
-/*.sass-cache

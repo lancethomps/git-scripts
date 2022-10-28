@@ -5,29 +5,15 @@ S="${BASH_SOURCE[0]}" && while [ -h "$S" ]; do D="$(cd -P "$(dirname "$S")" && p
 source "${_SCRIPT_DIR}/dotfiles/bin/.common_copy.sh" || exit 1
 ##################################################################################################################################################
 
+REQUIRES_SCRIPTS_FILE="${_SCRIPT_DIR}/requires.txt"
+
 function install_brew() {
-  local BREW_FORMULAS=(
-    coreutils
-    fzf
-    gawk
-    gnu-sed
-    pcre
-    realpath
-  )
-
-  if ! command -v jq >/dev/null 2>&1; then
-    BREW_FORMULAS+=(jq)
-  fi
-
-  echo "Installing required Homebrew formulas..."
-  log_and_run brew install "${BREW_FORMULAS[@]}"
+  echo "Installing required Homebrew formulas from Brewfile..."
+  log_and_run brew bundle install --file="${_SCRIPT_DIR}/Brewfile"
 }
 
-function install_jenkins_scripts() {
-  if ! command -v jenkins_curl >/dev/null 2>&1; then
-    echo "It is highly recommended to also setup https://github.com/lancethomps/jenkins-scripts if you plan on using the Jenkins scripts in this repo."
-  fi
-  return 0
+function install_pip() {
+  log_and_run pip install ltpylib
 }
 
 function finish_setup() {
@@ -35,10 +21,28 @@ function finish_setup() {
   echo "export PATH=\"\${PATH}:${_SCRIPT_DIR}/dotfiles/bin\""
 }
 
+function recommend_other_scripts() {
+  local required_scripts required_script
+
+  if ! test -e "${REQUIRES_SCRIPTS_FILE}"; then
+    return 0
+  fi
+
+  mapfile -t required_scripts <"$REQUIRES_SCRIPTS_FILE"
+  for required_script in "${required_scripts[@]}"; do
+    if ! test -e "${_SCRIPT_DIR}/../${required_script}"; then
+      echo "It is highly recommended to also setup https://github.com/lancethomps/${required_script}."
+    fi
+  done
+
+  return 0
+}
+
 function main() {
   install_brew
-  install_jenkins_scripts
+  install_pip
   finish_setup
+  recommend_other_scripts
 }
 
 main "$@"

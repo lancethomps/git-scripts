@@ -73,11 +73,23 @@ else
 fi
 
 function get_refs() {
+  git branches "$BRANCH_ARG" --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g' | uniq
+}
+
+function get_refs_mine() {
+  get_refs | grep "$(git config user.name)"
+}
+
+function get_branches() {
   if test "${mine-}" = "true"; then
-    git branches "$BRANCH_ARG" --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g' | grep "$(git config user.name)"
+    get_refs_mine
   else
-    git branches "$BRANCH_ARG" --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g'
+    get_refs
   fi
 }
 
-get_refs | fzf --ansi --no-sort --layout "reverse" --header "Current branch: ${GIT_CURRENT_BRANCH}" | pcregrep -o1 '\t([^\t]+)$'
+function main() {
+  get_branches | fzf --ansi --no-sort --layout "reverse" --header "Current branch: ${GIT_CURRENT_BRANCH}" | pcregrep -o1 '\t([^\t]+)$'
+}
+
+main

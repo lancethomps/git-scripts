@@ -166,6 +166,27 @@ function log_and_run_spaced() {
   log_with_title_sep "$(get_args_quoted "$@")" >&2
   "$@"
 }
+function log_verbose_and_run() {
+  if check_verbose; then
+    log_and_run "$@"
+  else
+    "$@"
+  fi
+}
+function log_verbose_and_run_spaced() {
+  if check_verbose; then
+    log_and_run_spaced "$@"
+  else
+    "$@"
+  fi
+}
+function log_verbose_and_run_no_sep() {
+  if check_verbose; then
+    log_and_run_no_sep "$@"
+  else
+    "$@"
+  fi
+}
 function log_stderr() {
   echo "$@" >&2
 }

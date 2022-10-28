@@ -113,6 +113,7 @@ function main() {
 
   if confirm_with_auto "Release tag version (${last_tag} -> ${next_tag}) via 'gh ${gh_args[*]}'?"; then
     gh "${gh_args[@]}"
+    git fetch
   fi
 }
 

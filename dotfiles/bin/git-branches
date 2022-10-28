@@ -5,8 +5,6 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.git_command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
-DEFAULT_BRANCH_ARG="${DEFAULT_BRANCH_ARG:-refs/remotes/origin/}"
-
 ################################################################### USAGE ########################################################################
 _SCRIPT_NAME="$(basename "$0")"
 
@@ -68,9 +66,16 @@ function has_branch_arg_as_first_arg() {
   test "${#PASSTHROUGH_ARGS[@]}" -ne 0 && check_not_true "${no_branch_arg-}"
 }
 
-for_each_ref_args=()
+for_each_ref_args=(for-each-ref)
 if check_not_true "${all_branches-}" && ! has_branch_arg_as_first_arg; then
-  for_each_ref_args+=("${DEFAULT_BRANCH_ARG}")
+  if test -n "${DEFAULT_BRANCH_ARG-}"; then
+    for_each_ref_args+=("${DEFAULT_BRANCH_ARG}")
+  else
+    for_each_ref_args+=(
+      refs/heads/
+      refs/remotes/origin/
+    )
+  fi
 fi
 
 if check_true "${simple-}"; then
@@ -80,7 +85,5 @@ elif check_true "${full-}"; then
 fi
 
 for_each_ref_args+=("${PASSTHROUGH_ARGS[@]}" --sort='-committerdate' --format="${GIT_BRANCH_REF_FORMAT}")
-log_debug_or_verbose git for-each-ref "${for_each_ref_args[@]}"
-exit_if_debug
-
-git for-each-ref "${for_each_ref_args[@]}"
+check_debug && echo git "${for_each_ref_args[@]}" && exit 0
+log_verbose_and_run git "${for_each_ref_args[@]}"

@@ -28,6 +28,7 @@ function check_travis() {
 
 function main() {
   local ci_type="${CI_NONE}" git_config_type
+  cd "$(git base-dir)"
 
   if git_config_type="$(check_git_config)"; then
     ci_type="$git_config_type"

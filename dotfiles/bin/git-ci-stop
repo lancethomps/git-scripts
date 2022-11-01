@@ -8,5 +8,5 @@ set -o errexit -o errtrace -o nounset
 
 git check-supported-ci-types jenkins
 
-api_url="$(git ci-last-url "$@")/stop"
+api_url="$(git ci-last-url "$@" | sed -E 's/\/$//g')/stop"
 log_and_run jenkins_curl -X POST "$api_url"

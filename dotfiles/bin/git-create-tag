@@ -3,10 +3,9 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git check-supported-ci-types jenkins
+function main() {
+  git tag "$@"
+  git push --tags
+}
 
-if ! job_url="$(git ci-job-url "$@")"; then
-  exit 1
-fi
-
-echo "${job_url}/lastBuild"
+main "$@"

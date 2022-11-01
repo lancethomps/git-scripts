@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
 if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
-# shellcheck source=./.command_defaults.sh
-source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
+# shellcheck source=./.common_copy.sh
+source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
+set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-browse_url_root="$(git ui-url-root)"
-git_current_branch="$(git current-branch)"
+function main() {
+  local base_branch
 
-if test -z "${1-}"; then
-  compare_url="${browse_url_root}/compare/${git_current_branch}"
-else
-  compare_url="${browse_url_root}/compare/${1}...${git_current_branch}"
-fi
+  if test -n "${1-}"; then
+    base_branch="$1"
+    shift
+  else
+    base_branch="origin/$(git default-branch)"
+  fi
 
-if check_debug; then
-  echo "${compare_url}"
-else
-  open "${compare_url}"
-fi
+  log_and_run_no_sep git rebase -i "$(git merge-base "$(git current-branch)" "${base_branch}")" "$@"
+}
+
+main "$@"

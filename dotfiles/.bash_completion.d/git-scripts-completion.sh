@@ -55,6 +55,7 @@ _create_wrapped_git_completion branch \
   diff-to-branch \
   diff-to-branch-files \
   diff-to-branch-fzf \
+  gh-compare \
   merge-branch-fzf \
   pr \
   update-tag
@@ -68,6 +69,9 @@ _create_wrapped_git_completion grep \
 _create_wrapped_git_completion ls-files \
   ignored \
   select-files
+
+_create_wrapped_git_completion rebase \
+  rebase-side-branch-commits
 
 _create_wrapped_git_completion reset \
   undo-merge

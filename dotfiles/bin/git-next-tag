@@ -17,7 +17,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--major | --minor | --patch | --version <version>]
+       ${_SCRIPT_NAME} [--major | --minor | --patch]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -53,11 +53,6 @@ while test $# -gt 0; do
       patch=true
       shift
       ;;
-    --version)
-      shift
-      version="$1"
-      shift
-      ;;
     *)
       echo "Unknown option: $1"
       _usage
@@ -80,11 +75,6 @@ function get_last_tag() {
 function get_next_tag() {
   local bump_part="minor"
 
-  if test -n "${version-}"; then
-    next_tag="$version"
-    return 0
-  fi
-
   if check_true "${major-}"; then
     bump_part="major"
   elif check_true "${minor-}"; then
@@ -101,20 +91,11 @@ function get_next_tag() {
 }
 
 function main() {
-  local gh_args
-
-  git fetch --tags
-  log_with_title_sep "TAGS"
-  git --no-pager tags
+  git fetch --tags >&2
 
   get_last_tag
   get_next_tag
-  gh_args=(release create "v${next_tag}" --generate-notes)
-
-  if confirm_with_auto "Release tag version (${last_tag} -> ${next_tag}) via 'gh ${gh_args[*]}'?"; then
-    gh "${gh_args[@]}"
-    git fetch
-  fi
+  echo "$next_tag"
 }
 
-main "$@"
+main

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+function main() {
+  local latest_tag_semver
+  latest_tag_semver="$(git tags --simple "$@" | pcregrep '^v.*' | semver_sort --remove-prefix v - | head -1)"
+  echo "v${latest_tag_semver}"
+}
+
+main "$@"

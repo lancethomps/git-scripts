@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./.common_copy.sh
+source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+function main() {
+  local pattern="$1" git_grep_args matching_files
+  shift
+
+  git_grep_args=("$pattern" "$@")
+  mapfile -t matching_files < <(git --no-pager grep --name-only "${git_grep_args[@]}")
+
+  if test "${#matching_files[@]}" -eq 0; then
+    exit_fatal "No files found"
+  fi
+
+  log_with_title_sep "MATCHES"
+  git --no-pager grep "${git_grep_args[@]}"
+  log_sep
+
+  if ! confirm_with_auto "Remove matching lines?"; then
+    return 1
+  fi
+
+  export auto_confirm=true
+  log_and_run remove_matching_lines "$pattern" "${matching_files[@]}"
+}
+
+main "$@"

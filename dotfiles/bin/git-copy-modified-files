@@ -19,7 +19,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--diff-to-branch <diff_to_branch>] [--from] [--select | --select-all] <copy_to_or_from_dir>
+       ${_SCRIPT_NAME} [--diff-to-branch <diff_to_branch>] [--from] [--select | --select-all] [--skip-checkout] <copy_to_or_from_dir>
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -60,6 +60,10 @@ while test $# -gt 0; do
     --select-all)
       select_all=true
       select=true
+      shift
+      ;;
+    --skip-checkout)
+      skip_checkout=true
       shift
       ;;
     --)
@@ -155,7 +159,7 @@ for file in "${MODIFIED_FILES[@]}"; do
   fi
 done
 
-if confirm "Checkout copied files now?"; then
+if ! check_true "${skip_checkout-}" && confirm "Checkout copied files now?"; then
   git checkout "${MODIFIED_FILES[@]}"
 fi
 

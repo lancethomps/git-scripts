@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+if git --no-pager grep -q 'import gradle\.kotlin\.dsl\.accessors'; then
+  echo "Found back Gradle Kotlin DSL accessors imports"
+  echo '-----'
+  git --no-pager grep 'import gradle\.kotlin\.dsl\.accessors'
+  echo '-----'
+  echo "Try running: git remove-matching-lines 'import gradle\\.kotlin\\.dsl\\.accessors'"
+  exit 1
+fi
+
+exit 0

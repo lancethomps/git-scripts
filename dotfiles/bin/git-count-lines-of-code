@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./.common_copy.sh
+source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
@@ -59,14 +62,6 @@ done
 function check_cloc() {
   if ! command -v cloc >/dev/null 2>&1; then
     brew install cloc
-  fi
-
-  return 0
-}
-
-function cd_to_git_base_dir_if_needed() {
-  if test "${cd_to_git_base_dir-}" = "true"; then
-    cd "$(git base-dir)"
   fi
 
   return 0

@@ -351,3 +351,12 @@ except:
 print(urllib_parse.quote_plus(sys.argv[1], safe=(sys.argv[2] if len(sys.argv) > 2 else "/")))
 ' "$@"
 }
+
+function repeat_run() {
+  local times="$1" idx
+  shift
+
+  for idx in $(seq "$times"); do
+    "$@"
+  done
+}

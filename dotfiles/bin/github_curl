@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./.common_copy.sh
+source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+temp_file="$(mktemp)"
+
+################################################################### CLEANUP ######################################################################
+function cleanup() {
+  local exit_val=$?
+
+  rm "$temp_file" >/dev/null 2>&1 || true
+
+  exit "$exit_val"
+}
+trap cleanup EXIT INT TERM
+##################################################################################################################################################
+
+curl_args=(
+  --silent
+  --user "$(git config --get user.name):${GITHUB_TOKEN}"
+  -o "$temp_file"
+  -w '%{http_code}'
+  -i
+  "$@"
+)
+
+if test -z "${DOCS_DIR-}"; then
+  DOCS_DIR="${HOME}/Documents"
+fi
+
+function try_curl_with_rate_limit_handling() {
+  local http_code curl_output headers_output json_output
+
+  http_code="$(curl "${curl_args[@]}")"
+  curl_output="$(cat "$temp_file")"
+  headers_output="${curl_output%%$'\r\n\r\n'*}"
+  json_output="${curl_output#*$'\r\n\r\n'}"
+
+  if test "${http_code-}" -eq 403; then
+    local debug_file_headers debug_file_json reset_time
+
+    debug_file_headers="${DOCS_DIR}/github_rate_limit_headers.txt"
+    debug_file_json="${DOCS_DIR}/github_rate_limit_response.json"
+    echo "$headers_output" >"$debug_file_headers"
+    echo "$json_output" >"$debug_file_json"
+
+    reset_time="$(pcre -o1 '^x\-ratelimit\-reset\: (.*?)$' "$debug_file_headers")"
+    if command -v epoch_converter >/dev/null 2>&1; then
+      reset_time="$(epoch_converter --iso "$reset_time")"
+    fi
+
+    log_stderr "$(TZ=UTC gdate '+%Y-%m-%dT%H:%M:%S.%3NZ') Rate limited, will retry shortly. Output at ${debug_file_headers} and ${debug_file_json}. x-ratelimit-reset: ${reset_time}"
+    sleep 30
+    try_curl_with_rate_limit_handling
+    return $?
+  fi
+
+  if test "${http_code-}" -eq 200; then
+    echo "$json_output" | jq -S
+  else
+    echo "$json_output"
+    return 1
+  fi
+}
+
+try_curl_with_rate_limit_handling

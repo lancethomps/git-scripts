@@ -356,6 +356,7 @@ function repeat_run() {
   local times="$1" idx
   shift
 
+  # shellcheck disable=SC2034
   for idx in $(seq "$times"); do
     "$@"
   done

@@ -17,7 +17,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--all-branches] [--full] [--no-branch-arg] [--simple] [<for_each_ref_arg>...]
+       ${_SCRIPT_NAME} [--all-branches] [--full] [--no-branch-arg] [--remove-dupes] [--simple] [<for_each_ref_arg>...]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -42,6 +42,10 @@ while test $# -gt 0; do
       ;;
     --no-branch-arg)
       no_branch_arg=true
+      shift
+      ;;
+    --remove-dupes)
+      remove_dupes=true
       shift
       ;;
     --simple)
@@ -86,4 +90,9 @@ fi
 
 for_each_ref_args+=("${PASSTHROUGH_ARGS[@]}" --sort='-committerdate' --format="${GIT_BRANCH_REF_FORMAT}")
 check_debug && echo git "${for_each_ref_args[@]}" && exit 0
-log_verbose_and_run git "${for_each_ref_args[@]}"
+
+if check_true "${remove_dupes-}"; then
+  log_verbose_and_run git "${for_each_ref_args[@]}" --color=always | gsed -r 's/\borigin\///g' | uniq
+else
+  log_verbose_and_run git "${for_each_ref_args[@]}"
+fi

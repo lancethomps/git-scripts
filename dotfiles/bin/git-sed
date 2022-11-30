@@ -94,24 +94,30 @@ function check_verbose() {
   test "${verbose-}" = "true"
 }
 
-function main() {
-  local all ascii sep r git_grep_args xargs_args
-
-  all="${search-}${replacement-}${flags-}"
+function find_sed_sep() {
+  local all="$1" ascii sep i
   case "$all" in
     */*)
       ascii="$(for ((i = 32; i <= 127; i++)); do printf '%b' "\\$(printf '%03o' "$i")"; done)"
       sep="$(printf '%s' "$ascii" | tr -d "$all")"
       sep="$(printf %.1s "$sep")"
-      if [ "X$sep" = "X" ]; then
+      if test -z "${sep-}"; then
         echo 'could not find an unused character for sed separator character'
-        exit 1
+        return 1
       fi
       ;;
     *)
       sep=/
       ;;
   esac
+
+  echo "$sep"
+}
+
+function main() {
+  local sep r git_grep_args xargs_args
+
+  sep="$(find_sed_sep "${search-}${replacement-}${flags-}")"
 
   # shellcheck disable=SC2015
   r="$(xargs -r false </dev/null >/dev/null 2>&1 && echo r || true)"

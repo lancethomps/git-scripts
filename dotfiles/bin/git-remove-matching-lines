@@ -6,6 +6,23 @@ source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
+function remove_matching_lines() {
+  local pattern="$1" match_f lines_count
+  shift
+
+  for match_f in "$@"; do
+    if ! test -e "$match_f"; then
+      exit_fatal "File $match_f does not exist!"
+    fi
+
+    if lines_count="$(grep -Ec "$pattern" "$match_f")" && test "$lines_count" -gt 0; then
+      if confirm_with_auto "${lines_count} lines will be removed, continue with replace?"; then
+        gsed -i -r "/${pattern//\//\\\/}/d" "$match_f"
+      fi
+    fi
+  done
+}
+
 function main() {
   local pattern="$1" git_grep_args matching_files
   shift

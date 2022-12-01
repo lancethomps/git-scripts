@@ -159,6 +159,8 @@ for file in "${MODIFIED_FILES[@]}"; do
   fi
 done
 
+log_and_run_surround git -C "${DEST_DIR}" --no-pager diff -- "${MODIFIED_FILES[@]}" || true
+
 if ! check_true "${skip_checkout-}" && confirm "Checkout copied files now?"; then
   git checkout "${MODIFIED_FILES[@]}"
 fi

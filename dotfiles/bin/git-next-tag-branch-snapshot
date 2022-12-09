@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+function main() {
+  local next_tag branch_as_version
+
+  next_tag="$(git next-tag)"
+  branch_as_version="$(git current-branch | gsed -r 's/[^A-Za-z0-9.-]//g' | head -c 50)"
+
+  echo "${next_tag}-${branch_as_version}-SNAPSHOT"
+}
+
+main "$@"

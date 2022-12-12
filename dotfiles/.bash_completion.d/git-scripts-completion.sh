@@ -17,7 +17,7 @@ complete -o bashdefault -o default -F __complete_install_git_hook install_git_ho
 ################################################################### WRAPPED GIT COMPLETION #######################################################
 ##################################################################################################################################################
 # shellcheck disable=SC2016
-_ALLOPT_COMPLETION_CMD='compopt +o nospace; local _git_cmd_args=("${words[0]}-${words[1]}" "${words[@]:2}"); _allopt "${_git_cmd_args[@]}"; '
+_ALLOPT_COMPLETION_CMD='compopt +o nospace; local _git_cmd_args=("${words[0]}-${words[1]}" "${words[@]:2}"); __complete_bash_completion_using_help "${_git_cmd_args[@]}"; '
 _ALLOPT_ALSO_COMMANDS=(
   grep-fzf
   pr

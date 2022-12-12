@@ -92,7 +92,7 @@ for_each_ref_args+=("${PASSTHROUGH_ARGS[@]}" --sort='-committerdate' --format="$
 check_debug && echo git "${for_each_ref_args[@]}" && exit 0
 
 if check_true "${remove_dupes-}"; then
-  log_verbose_and_run git "${for_each_ref_args[@]}" --color=always | gsed -r 's/\borigin\///g' | uniq
+  log_verbose_and_run git "${for_each_ref_args[@]}" --color=always | gsed -r 's/\borigin\///g' | sort -r -u
 else
   log_verbose_and_run git "${for_each_ref_args[@]}"
 fi

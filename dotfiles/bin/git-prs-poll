@@ -4,7 +4,7 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 function main() {
-  gh_prs --poll --repo "$(git repo-name-with-owner)" "$@"
+  gh_prs --poll --repo "$(git repo-name-with-owner)" --head-ref-name "$(git current-branch)" "$@"
 }
 
 main "$@"

@@ -1,15 +1,31 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./../dotfiles/bin/.common_copy.sh
+source "${_SCRIPT_DIR}/../dotfiles/bin/.common_copy.sh" || exit 1
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-if git --no-pager grep -q 'import gradle\.kotlin\.dsl\.accessors'; then
-  echo "Found back Gradle Kotlin DSL accessors imports"
-  echo '-----'
-  git --no-pager grep 'import gradle\.kotlin\.dsl\.accessors'
-  echo '-----'
-  echo "Try running: git remove-matching-lines 'import gradle\\.kotlin\\.dsl\\.accessors'"
-  exit 1
+function check_accessors() {
+  if git --no-pager grep -q 'import gradle\.kotlin\.dsl\.accessors'; then
+    echo "Found back Gradle Kotlin DSL accessors imports"
+    log_sep
+    git --no-pager grep 'import gradle\.kotlin\.dsl\.accessors'
+    log_sep
+    return 1
+  fi
+
+  return 0
+}
+
+if ! check_accessors; then
+  if confirm_with_auto 'Run git remove-gradle-accessors to remove problematic lines?'; then
+    git remove-gradle-accessors
+    check_accessors
+  else
+    echo "Try running: git remove-gradle-accessors"
+    exit 1
+  fi
 fi
 
 exit 0

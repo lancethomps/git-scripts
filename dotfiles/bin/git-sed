@@ -34,7 +34,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [-f | --flags <flags>] <search> <replacement> [<git_grep_arg>...]
+       ${_SCRIPT_NAME_GIT} [-f | --flags <flags>] [--no-print-matches] <search> <replacement> [<git_grep_arg>...]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -63,6 +63,10 @@ while test $# -gt 0; do
     -f | --flags)
       shift
       flags="$1"
+      shift
+      ;;
+    --no-print-matches)
+      no_print_matches=true
       shift
       ;;
     --)
@@ -95,14 +99,14 @@ function check_verbose() {
 }
 
 function find_sed_sep() {
-  local all="$1" ascii sep i
+  local all="$1" ascii sep idx
   case "$all" in
     */*)
-      ascii="$(for ((i = 32; i <= 127; i++)); do printf '%b' "\\$(printf '%03o' "$i")"; done)"
+      ascii="$(for ((idx = 32; idx <= 127; idx++)); do printf '%b' "\\$(printf '%03o' "$idx")"; done)"
       sep="$(printf '%s' "$ascii" | tr -d "$all")"
       sep="$(printf %.1s "$sep")"
       if test -z "${sep-}"; then
-        echo 'could not find an unused character for sed separator character'
+        echo 'could not find an unused character for sed separator character' >&2
         return 1
       fi
       ;;
@@ -115,16 +119,19 @@ function find_sed_sep() {
 }
 
 function main() {
-  local sep r git_grep_args xargs_args
+  local sep maybe_xargs_r_param git_grep_args git_grep_end_args xargs_args
 
-  sep="$(find_sed_sep "${search-}${replacement-}${flags-}")"
+  if ! sep="$(find_sed_sep "${search-}${replacement-}${flags-}")"; then
+    exit 1
+  fi
 
   # shellcheck disable=SC2015
-  r="$(xargs -r false </dev/null >/dev/null 2>&1 && echo r || true)"
+  maybe_xargs_r_param="$(xargs -r false </dev/null >/dev/null 2>&1 && echo r || true)"
 
-  git_grep_args=(-c grep.fullname=false grep -lz "${PASSTHROUGH_ARGS[@]}" "${search-}" "${END_ARGS[@]}")
+  git_grep_end_args=("${PASSTHROUGH_ARGS[@]}" "${search-}" "${END_ARGS[@]}")
+  git_grep_args=(-c grep.fullname=false grep -lz "${git_grep_end_args[@]}")
   # shellcheck disable=SC2206
-  xargs_args=(-0"$r" gsed -i -r "s$sep${search-}$sep${replacement-}$sep${flags-}")
+  xargs_args=(-0"$maybe_xargs_r_param" gsed -i -r "s$sep${search-}$sep${replacement-}$sep${flags-}")
 
   if check_debug || check_verbose; then
     echo "COMMAND"
@@ -135,7 +142,13 @@ function main() {
     exit 0
   fi
 
+  if test "${no_print_matches-}" != "true"; then
+    if ! git -c grep.fullname=false --no-pager grep "${git_grep_end_args[@]}"; then
+      return 0
+    fi
+  fi
+
   git "${git_grep_args[@]}" | xargs "${xargs_args[@]}"
 }
 
-main "$@"
+main

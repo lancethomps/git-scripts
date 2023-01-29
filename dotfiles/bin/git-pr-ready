@@ -16,7 +16,7 @@ function main() {
   fi
 
   log_and_run_surround gh pr list --head "$curr_branch"
-  log_and_run gh pr review "$@" --approve
+  log_and_run gh pr ready "$@"
 }
 
 main "$@"

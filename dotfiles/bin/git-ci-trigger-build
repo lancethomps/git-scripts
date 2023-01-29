@@ -84,7 +84,7 @@ function main() {
     api_url="${api_url}&$(join_by '&' "${build_params[@]}")"
   fi
 
-  log_and_run jenkins_curl "$api_url" -X POST
+  log_and_run_no_sep jenkins_curl "$api_url" -X POST
 }
 
 main "${PASSTHROUGH_ARGS[@]}"

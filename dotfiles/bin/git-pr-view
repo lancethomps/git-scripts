@@ -7,16 +7,13 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 function main() {
-  local curr_branch
+  local curr_branch view_args=("$@")
 
-  if test -n "${1-}" && git is-valid-branch "${1-}"; then
-    curr_branch="$1"
-  else
-    curr_branch="$(git current-branch)"
+  if test -z "${1-}"; then
+    view_args=("$(git current-branch)")
   fi
 
-  log_and_run_surround gh pr list --head "$curr_branch"
-  log_and_run gh pr review "$@" --approve
+  log_and_run_surround gh pr view "${view_args[@]}"
 }
 
 main "$@"

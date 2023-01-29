@@ -23,7 +23,7 @@ if ! check_accessors; then
     mapfile -t files_with_accessors < <(git --no-pager grep-gradle-accessors --name-only)
     log_and_run git remove-gradle-accessors
     check_accessors
-    exit 1
+    log_and_run git add "${files_with_accessors[@]}"
   else
     echo "Try running: git remove-gradle-accessors"
     exit 1

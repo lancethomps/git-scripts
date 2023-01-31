@@ -7,7 +7,7 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 function main() {
-  local curr_branch view_args=("$@")
+  local view_args=("$@")
 
   if test -z "${1-}"; then
     view_args=("$(git current-branch)")

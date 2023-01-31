@@ -20,7 +20,6 @@ function check_accessors() {
 
 if ! check_accessors; then
   if confirm_with_auto 'Run git remove-gradle-accessors to remove problematic lines?'; then
-    mapfile -t files_with_accessors < <(git --no-pager grep-gradle-accessors --name-only)
     log_and_run git remove-gradle-accessors
     check_accessors
     exit 1

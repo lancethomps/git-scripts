@@ -3,4 +3,4 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git prs-latest "$@" | jq --exit-status -r '.number | select(. != null)'
+git prs-latest "$@" | jq --exit-status -r '.url | select(. != null)'

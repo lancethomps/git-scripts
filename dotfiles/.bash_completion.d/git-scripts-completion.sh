@@ -48,7 +48,9 @@ function _create_wrapped_git_completion() {
 }
 
 _create_wrapped_git_completion_allopt_only \
-  gh-release-tag
+  gh-release-tag \
+  prs-select \
+  prs-select-url
 
 _create_wrapped_git_completion branch \
   del-branch \

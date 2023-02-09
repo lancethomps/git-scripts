@@ -10,10 +10,10 @@ if command -v git-in-repo >/dev/null 2>&1 && ! git in-repo; then
   exit_fatal "Not in a git repo"
 fi
 
-if ! command -v gsed >/dev/null 2>&1; then
+if ! command -v gsed >/dev/null 2>&1 || ! command -v pcregrep >/dev/null 2>&1; then
   if test "$(uname)" = "Darwin"; then
-    echo "gsed not found, running: brew install gsed"
-    brew install gsed
+    echo "gsed or pcregrep not found, running: brew install gsed pcre"
+    brew install gsed pcre
   else
     alias gsed='sed'
   fi
@@ -118,8 +118,23 @@ function find_sed_sep() {
   echo "$sep"
 }
 
+function run_git_grep() {
+  git -c grep.fullname=false --no-pager grep "${git_grep_end_args[@]}"
+}
+
+function show_updated_lines() {
+  # shellcheck disable=SC2155
+  local file_and_num file_path line_num purple="$(printf "\033[0;35m")" cyan="$(printf "\033[0;36m")" green="$(printf "\033[0;32m")" clear_color="$(printf "\033[0m")"
+
+  for file_and_num in "$@"; do
+    file_path="$(echo "$file_and_num" | pcregrep -o1 '^(.*?)\:(\d+)$')"
+    line_num="$(echo "$file_and_num" | pcregrep -o2 '^(.*?)\:(\d+)$')"
+    gsed "${line_num}q;d" "$file_path" | gsed "s|^|${purple}${file_path}${cyan}:${green}${line_num}${cyan}:${clear_color}|g"
+  done
+}
+
 function main() {
-  local sep maybe_xargs_r_param git_grep_args git_grep_end_args xargs_args
+  local sep maybe_xargs_r_param git_grep_args xargs_args matched_lines
 
   if ! sep="$(find_sed_sep "${search-}${replacement-}${flags-}")"; then
     exit 1
@@ -143,12 +158,20 @@ function main() {
   fi
 
   if test "${no_print_matches-}" != "true"; then
-    if ! git -c grep.fullname=false --no-pager grep "${git_grep_end_args[@]}"; then
+    if ! run_git_grep; then
       return 0
     fi
+    mapfile -t matched_lines < <(run_git_grep | pcregrep -o1 '^([^\:]+?\:\d+)\:')
   fi
 
   git "${git_grep_args[@]}" | xargs "${xargs_args[@]}"
+
+  if test "${no_print_matches-}" != "true"; then
+    show_updated_lines "${matched_lines[@]}"
+  fi
+
+  return 0
 }
 
+declare -x git_grep_end_args
 main

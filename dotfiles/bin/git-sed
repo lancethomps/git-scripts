@@ -7,13 +7,17 @@ export GREP_OPTIONS=
 flags='g'
 
 if command -v git-in-repo >/dev/null 2>&1 && ! git in-repo; then
-  exit_fatal "Not in a git repo"
+  echo "Not in a git repo"
+  exit 1
 fi
 
 if ! command -v gsed >/dev/null 2>&1 || ! command -v pcregrep >/dev/null 2>&1; then
   if test "$(uname)" = "Darwin"; then
     echo "gsed or pcregrep not found, running: brew install gsed pcre"
     brew install gsed pcre
+  elif ! command -v pcregrep >/dev/null 2>&1; then
+    echo "pcregrep not found and could not determine how to install it. Please install it manually."
+    exit 1
   else
     alias gsed='sed'
   fi

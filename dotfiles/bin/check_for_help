@@ -3,16 +3,15 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-# BASH_COMPLETION_USING_HELP
-if check_for_help "$@"; then
-  git-ci-job-url "$@"
-  exit $?
-fi
+while test "$#" -gt 0; do
+  case "$1" in
+    -h | --help | -help | --usage | -usage | help)
+      exit 0
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
 
-git check-supported-ci-types jenkins
-
-if ! job_url="$(git ci-job-url "$@")"; then
-  exit 1
-fi
-
-echo "${job_url}/lastBuild"
+exit 1

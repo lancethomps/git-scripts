@@ -6,6 +6,12 @@ source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
+# BASH_COMPLETION_USING_HELP
+if check_for_help "$@"; then
+  git-ci-last-url "$@"
+  exit $?
+fi
+
 git check-supported-ci-types jenkins
 
 api_url="$(git ci-last-url "$@")"

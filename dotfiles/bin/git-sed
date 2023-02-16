@@ -38,7 +38,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [-f | --flags <flags>] [--no-print-matches] <search> <replacement> [<git_grep_arg>...]
+       ${_SCRIPT_NAME_GIT} [-f | --flags <flags>] [--no-print-matches | --print-name-only] <search> <replacement> [<git_grep_arg>...]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -71,6 +71,10 @@ while test $# -gt 0; do
       ;;
     --no-print-matches)
       no_print_matches=true
+      shift
+      ;;
+    --print-name-only)
+      print_name_only=true
       shift
       ;;
     --)
@@ -123,7 +127,7 @@ function find_sed_sep() {
 }
 
 function run_git_grep() {
-  git -c grep.fullname=false --no-pager grep "${git_grep_end_args[@]}"
+  git -c grep.fullname=false --no-pager grep "$@" "${git_grep_end_args[@]}"
 }
 
 function show_updated_lines() {
@@ -161,7 +165,9 @@ function main() {
     exit 0
   fi
 
-  if test "${no_print_matches-}" != "true"; then
+  if test "${print_name_only-}" = "true"; then
+    run_git_grep --name-only
+  elif test "${no_print_matches-}" != "true"; then
     if ! run_git_grep; then
       return 0
     fi

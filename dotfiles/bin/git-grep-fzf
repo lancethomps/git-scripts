@@ -22,7 +22,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [--use-case] <grep_args>...
+       ${_SCRIPT_NAME_GIT} [--tracked] [--use-case] <grep_args>...
        ${SYNOP_INDENT}     [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -47,6 +47,10 @@ while test $# -gt 0; do
       shift
       export verbose=true
       ;;
+    --tracked)
+      tracked=true
+      shift
+      ;;
     --use-case)
       shift
       use_case=true
@@ -69,6 +73,10 @@ fi
 
 if check_not_true "${use_case-}" && ! [[ ${*: -1} =~ [A-Z] ]]; then
   _GREP_ARGS+=(-i)
+fi
+
+if check_not_true "${tracked-}"; then
+  _GREP_ARGS+=(--untracked)
 fi
 
 USE_BAT_IF_AVAILABLE="${USE_BAT_IF_AVAILABLE:-false}"

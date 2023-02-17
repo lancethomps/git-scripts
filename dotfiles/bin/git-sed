@@ -3,8 +3,7 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-export GREP_OPTIONS=
-flags='g'
+declare -x GREP_OPTIONS="" flags='g' git_grep_end_args git_grep_config_args=(-c grep.fullname=false -c submodule.recurse=false)
 
 if command -v git-in-repo >/dev/null 2>&1 && ! git in-repo; then
   echo "Not in a git repo"
@@ -38,7 +37,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [-f | --flags <flags>] [--no-print-matches | --print-name-only] <search> <replacement> [<git_grep_arg>...]
+       ${_SCRIPT_NAME_GIT} [-f | --flags <flags>] [--no-exit-status] [--no-print-matches | --print-name-only] <search> <replacement> [<git_grep_arg>...]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -67,6 +66,10 @@ while test $# -gt 0; do
     -f | --flags)
       shift
       flags="$1"
+      shift
+      ;;
+    --no-exit-status)
+      no_exit_status=true
       shift
       ;;
     --no-print-matches)
@@ -106,6 +109,14 @@ function check_verbose() {
   test "${verbose-}" = "true"
 }
 
+function exit_failure() {
+  if test "${no_exit_status-}" = "true"; then
+    exit 0
+  else
+    exit 1
+  fi
+}
+
 function find_sed_sep() {
   local all="$1" ascii sep idx
   case "$all" in
@@ -127,7 +138,7 @@ function find_sed_sep() {
 }
 
 function run_git_grep() {
-  git -c grep.fullname=false --no-pager grep "$@" "${git_grep_end_args[@]}"
+  git "${git_grep_config_args[@]}" --no-pager grep "$@" "${git_grep_end_args[@]}"
 }
 
 function show_updated_lines() {
@@ -151,8 +162,8 @@ function main() {
   # shellcheck disable=SC2015
   maybe_xargs_r_param="$(xargs -r false </dev/null >/dev/null 2>&1 && echo r || true)"
 
-  git_grep_end_args=("${PASSTHROUGH_ARGS[@]}" "${search-}" "${END_ARGS[@]}")
-  git_grep_args=(-c grep.fullname=false grep -lz "${git_grep_end_args[@]}")
+  git_grep_end_args=(--untracked "${PASSTHROUGH_ARGS[@]}" "${search-}" "${END_ARGS[@]}")
+  git_grep_args=("${git_grep_config_args[@]}" grep -lz "${git_grep_end_args[@]}")
   # shellcheck disable=SC2206
   xargs_args=(-0"$maybe_xargs_r_param" gsed -i -r "s$sep${search-}$sep${replacement-}$sep${flags-}")
 
@@ -166,12 +177,17 @@ function main() {
   fi
 
   if test "${print_name_only-}" = "true"; then
-    run_git_grep --name-only
+    if ! run_git_grep --files-with-matches; then
+      exit_failure
+    fi
   elif test "${no_print_matches-}" != "true"; then
     if ! run_git_grep; then
-      return 0
+      echo "No matches found" >&2
+      exit_failure
     fi
     mapfile -t matched_lines < <(run_git_grep | pcregrep -o1 '^([^\:]+?\:\d+)\:')
+  elif ! run_git_grep -q; then
+    exit_failure
   fi
 
   git "${git_grep_args[@]}" | xargs "${xargs_args[@]}"
@@ -183,5 +199,4 @@ function main() {
   return 0
 }
 
-declare -x git_grep_end_args
 main

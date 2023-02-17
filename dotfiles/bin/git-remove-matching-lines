@@ -31,7 +31,8 @@ function main() {
   mapfile -t matching_files < <(git --no-pager grep --name-only "${git_grep_args[@]}")
 
   if test "${#matching_files[@]}" -eq 0; then
-    exit_fatal "No files found"
+    log_stderr "No matches found"
+    return 1
   fi
 
   log_with_title_sep "MATCHES"

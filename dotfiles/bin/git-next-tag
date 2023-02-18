@@ -17,7 +17,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--major | --minor | --patch]
+       ${_SCRIPT_NAME} [--no-fetch] [--major | --minor | --patch]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -39,6 +39,10 @@ while test $# -gt 0; do
       ;;
     --verbose)
       export verbose=true
+      shift
+      ;;
+    --no-fetch)
+      no_fetch=true
       shift
       ;;
     --major)
@@ -91,7 +95,9 @@ function get_next_tag() {
 }
 
 function main() {
-  git fetch --tags >&2
+  if ! check_true "${no_fetch-}"; then
+    git fetch --tags >&2
+  fi
 
   get_last_tag
   get_next_tag

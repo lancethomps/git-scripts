@@ -37,7 +37,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [-f | --flags <flags>] [--no-exit-status] [--no-print-matches | --print-name-only] <search> <replacement> [<git_grep_arg>...]
+       ${_SCRIPT_NAME_GIT} [-f | --flags <flags>] [-ne | --no-exit-status] [--no-print-matches | --print-name-only] <search> <replacement> [<git_grep_arg>...]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -68,7 +68,7 @@ while test $# -gt 0; do
       flags="$1"
       shift
       ;;
-    --no-exit-status)
+    -ne | --no-exit-status)
       no_exit_status=true
       shift
       ;;

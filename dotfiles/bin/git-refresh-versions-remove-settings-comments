@@ -62,7 +62,7 @@ done
 ##################################################################################################################################################
 
 function main() {
-  log_and_run git remove-matching-lines '////.*available' -- settings.gradle.kts "$@" || true
+  log_and_run git remove-matching-lines '//.*(available|#$)' -- settings.gradle.kts "$@" || true
 }
 
 main "${PASSTHROUGH_ARGS[@]}"

@@ -6,6 +6,59 @@ source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--auto-confirm] [-ne | --no-exit-status] <pattern> [<git_grep_arg>..]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+
+EXAMPLES
+       ${_SCRIPT_NAME}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --auto-confirm)
+      export auto_confirm=true
+      shift
+      ;;
+    -ne | --no-exit-status)
+      no_exit_status=true
+      shift
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
 function remove_matching_lines() {
   local pattern="$1" match_f lines_count
   shift
@@ -32,7 +85,11 @@ function main() {
 
   if test "${#matching_files[@]}" -eq 0; then
     log_stderr "No matches found"
-    return 1
+    if check_true "${no_exit_status-}"; then
+      return 0
+    else
+      return 1
+    fi
   fi
 
   log_with_title_sep "MATCHES"
@@ -40,11 +97,15 @@ function main() {
   log_sep
 
   if ! confirm_with_auto "Remove matching lines?"; then
-    return 1
+    if check_true "${no_exit_status-}"; then
+      return 0
+    else
+      return 1
+    fi
   fi
 
   export auto_confirm=true
   log_and_run remove_matching_lines "$pattern" "${matching_files[@]}"
 }
 
-main "$@"
+main "${PASSTHROUGH_ARGS[@]}"

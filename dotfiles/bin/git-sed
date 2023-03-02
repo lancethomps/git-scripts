@@ -3,22 +3,25 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-declare -x GREP_OPTIONS="" flags='g' git_grep_end_args git_grep_config_args=(-c grep.fullname=false -c submodule.recurse=false)
+declare -x GREP_OPTIONS="" flags='' use_gsed=true git_grep_end_args git_grep_config_args=(-c grep.fullname=false -c submodule.recurse=false) xargs_args
 
 if command -v git-in-repo >/dev/null 2>&1 && ! git in-repo; then
   echo "Not in a git repo"
   exit 1
 fi
 
-if ! command -v gsed >/dev/null 2>&1 || ! command -v pcregrep >/dev/null 2>&1; then
+if ! command -v gsed >/dev/null 2>&1 || ! command -v pcregrep >/dev/null 2>&1 || ! command -v sd >/dev/null 2>&1; then
   if test "$(uname)" = "Darwin"; then
     echo "gsed or pcregrep not found, running: brew install gsed pcre"
-    brew install gsed pcre
+    brew install gsed pcre sd
   elif ! command -v pcregrep >/dev/null 2>&1; then
     echo "pcregrep not found and could not determine how to install it. Please install it manually."
     exit 1
   else
     alias gsed='sed'
+    if ! command -v sd >/dev/null 2>&1; then
+      use_gsed=true
+    fi
   fi
 fi
 
@@ -37,7 +40,8 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [-f | --flags <flags>] [-ne | --no-exit-status] [--no-print-matches | --print-name-only] <search> <replacement> [<git_grep_arg>...]
+       ${_SCRIPT_NAME_GIT} [-f | --flags <flags>] [--git-grep-regex <git_grep_regex>] [-ne | --no-exit-status] [--no-print-matches | --print-name-only] [-s | --string-mode] [--use-gsed | --use-sd]
+       ${SYNOP_INDENT} <search> <replacement> [<git_grep_arg>...]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -68,6 +72,11 @@ while test $# -gt 0; do
       flags="$1"
       shift
       ;;
+    --git-grep-regex)
+      shift
+      git_grep_regex="$1"
+      shift
+      ;;
     -ne | --no-exit-status)
       no_exit_status=true
       shift
@@ -78,6 +87,18 @@ while test $# -gt 0; do
       ;;
     --print-name-only)
       print_name_only=true
+      shift
+      ;;
+    -s | --string-mode)
+      string_mode=true
+      shift
+      ;;
+    --use-gsed)
+      use_gsed=true
+      shift
+      ;;
+    --use-sd)
+      use_gsed=false
       shift
       ;;
     --)
@@ -107,6 +128,10 @@ function check_debug() {
 
 function check_verbose() {
   test "${verbose-}" = "true"
+}
+
+function should_use_gsed() {
+  check_true "${use_gsed-}"
 }
 
 function exit_failure() {
@@ -152,20 +177,50 @@ function show_updated_lines() {
   done
 }
 
-function main() {
-  local sep maybe_xargs_r_param git_grep_args xargs_args matched_lines
+function configure_gsed() {
+  local sep
 
   if ! sep="$(find_sed_sep "${search-}${replacement-}${flags-}")"; then
     exit 1
   fi
 
+  # shellcheck disable=SC2206
+  xargs_args+=(gsed -i -r "s$sep${search-}$sep${replacement-}$sep${flags-}")
+}
+
+function configure_sd() {
+  xargs_args+=(sd)
+
+  if test -n "${flags-}"; then
+    xargs_args+=(--flags "$flags")
+  fi
+
+  if test "${string_mode-}" = "true"; then
+    xargs_args+=(--string-mode)
+  fi
+
+  xargs_args+=("${search-}" "${replacement-}")
+}
+
+function main() {
+  local maybe_xargs_r_param git_grep_args matched_lines
+
+  if should_use_gsed && test -z "${flags-}"; then
+    flags='g'
+  fi
+
   # shellcheck disable=SC2015
   maybe_xargs_r_param="$(xargs -r false </dev/null >/dev/null 2>&1 && echo r || true)"
+  xargs_args=(-0"$maybe_xargs_r_param")
 
-  git_grep_end_args=(--untracked "${PASSTHROUGH_ARGS[@]}" "${search-}" "${END_ARGS[@]}")
+  if should_use_gsed; then
+    configure_gsed
+  else
+    configure_sd
+  fi
+
+  git_grep_end_args=(--untracked "${PASSTHROUGH_ARGS[@]}" "${git_grep_regex:-${search-}}" "${END_ARGS[@]}")
   git_grep_args=("${git_grep_config_args[@]}" grep -lz "${git_grep_end_args[@]}")
-  # shellcheck disable=SC2206
-  xargs_args=(-0"$maybe_xargs_r_param" gsed -i -r "s$sep${search-}$sep${replacement-}$sep${flags-}")
 
   if check_debug || check_verbose; then
     echo "COMMAND"

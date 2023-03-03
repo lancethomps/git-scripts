@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--days | --hours | --minutes | --seconds] <period_units>
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+
+EXAMPLES
+       ${_SCRIPT_NAME} 10
+       ${_SCRIPT_NAME} --days 7
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --days)
+      days=true
+      shift
+      ;;
+    --hours)
+      hours=true
+      shift
+      ;;
+    --minutes)
+      export minutes=true
+      shift
+      ;;
+    --seconds)
+      seconds=true
+      shift
+      ;;
+    --)
+      shift
+      PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+function file_older_than_seconds() {
+  if test "$(($(date +"%s") - $(gstat -c '%Y' "${1}")))" -gt "${2}"; then
+    return 0
+  fi
+  return 1
+}
+
+function main() {
+  if test -z "${1-}"; then
+    _usage
+    echo "No period_units supplied"
+    exit 1
+  fi
+
+  local period_units in_seconds
+  period_units="$1"
+
+  if test "${days-}" = "true"; then
+    in_seconds="$((period_units * 60 * 60 * 24))"
+  elif test "${hours-}" = "true"; then
+    in_seconds="$((period_units * 60 * 60))"
+  elif test "${seconds-}" = "true"; then
+    in_seconds="$period_units"
+  else
+    in_seconds="$((period_units * 60))"
+  fi
+
+  file_older_than_seconds "$(git base-dir)/.git/FETCH_HEAD" "$in_seconds"
+}
+
+main "${PASSTHROUGH_ARGS[@]}"

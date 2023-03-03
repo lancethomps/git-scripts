@@ -5,6 +5,8 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
+FETCH_OLDER_THAN_MINUTES="${FETCH_OLDER_THAN_MINUTES:-60}"
+
 ################################################################### USAGE ########################################################################
 _SCRIPT_NAME="$(basename "$0")"
 
@@ -17,7 +19,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--no-fetch] [--major | --minor | --patch]
+       ${_SCRIPT_NAME} [--force-fetch | --no-fetch] [--major | --minor | --patch]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -39,6 +41,10 @@ while test $# -gt 0; do
       ;;
     --verbose)
       export verbose=true
+      shift
+      ;;
+    --force-fetch)
+      force_fetch=true
       shift
       ;;
     --no-fetch)
@@ -68,6 +74,11 @@ done
 
 declare -x last_tag next_tag
 
+function do_fetch() {
+  log_verbose "Fetching latest tags"
+  git fetch --tags >&2
+}
+
 function get_last_tag() {
   if ! last_tag="$(git latest-tag | sed -E 's/v//g')"; then
     exit_fatal "Could not find last_tag: ${last_tag}"
@@ -95,8 +106,12 @@ function get_next_tag() {
 }
 
 function main() {
-  if ! check_true "${no_fetch-}"; then
-    git fetch --tags >&2
+  if check_true "${no_fetch-}"; then
+    log_verbose "Not fetching due to --no-fetch"
+  elif check_true "${force_fetch-}"; then
+    do_fetch
+  elif git last-fetch-older-than "$FETCH_OLDER_THAN_MINUTES"; then
+    do_fetch
   fi
 
   get_last_tag

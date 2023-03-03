@@ -21,7 +21,7 @@ stash_create_pr_args=(
   --to-ref "${PR_TO_REF/origin\//}"
 )
 
-if test -n "${1:-}"; then
+if test -n "${1-}"; then
   stash_create_pr_args+=("$@")
 fi
 
@@ -50,7 +50,7 @@ if test "$has_description" = 'false'; then
   )
 fi
 
-if test "${debug_mode:-}" = true; then
+if test "${debug_mode-}" = true; then
   echo stash_create_pr "${stash_create_pr_args[@]}"
 else
   stash_create_pr "${stash_create_pr_args[@]}"

@@ -29,7 +29,7 @@ if echo " ${BRANCH_NAME}" | pcregrep --quiet "$GIT_BRANCH_SKIP_REGEX"; then
   exit 1
 fi
 
-if test -z "${PASSTHROUGH_ARGS[0]:-}" && ! confirm_with_auto "Delete local and remote branch '${BRANCH_NAME}'?"; then
+if test -z "${PASSTHROUGH_ARGS[0]-}" && ! confirm_with_auto "Delete local and remote branch '${BRANCH_NAME}'?"; then
   exit 1
 fi
 

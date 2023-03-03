@@ -5,7 +5,7 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
-if test -n "${1:-}" && git does-branch-exist "${1:-}"; then
+if test -n "${1-}" && git does-branch-exist "${1-}"; then
   GIT_BRANCH="$1"
   shift
 else

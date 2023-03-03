@@ -81,13 +81,13 @@ while test $# -gt 0; do
   esac
 done
 
-if test -z "${1:-}"; then
+if test -z "${1-}"; then
   _usage "$@"
   exit 1
 fi
 ##################################################################################################################################################
 
-COPY_DIR="${1:-}"
+COPY_DIR="${1-}"
 
 if ! test -e "${COPY_DIR}"; then
   echo "Directory to copy from/to does not exist: ${COPY_DIR}"

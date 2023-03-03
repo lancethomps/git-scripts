@@ -18,8 +18,8 @@ function has_format_arg() {
   return 1
 }
 
-if test -z "${PR_TO_REF:-}"; then
-  if test -n "${1:-}" && [[ $1 != '-'* ]]; then
+if test -z "${PR_TO_REF-}"; then
+  if test -n "${1-}" && [[ $1 != '-'* ]]; then
     PR_TO_REF="$1"
     shift
   else

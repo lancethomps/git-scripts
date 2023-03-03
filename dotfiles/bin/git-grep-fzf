@@ -65,7 +65,7 @@ while test $# -gt 0; do
   esac
 done
 
-if test -z "${1:-}"; then
+if test -z "${1-}"; then
   _usage "$@"
   exit 1
 fi

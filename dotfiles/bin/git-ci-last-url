@@ -5,10 +5,43 @@ set -o errexit -o errtrace -o nounset
 
 ci_last_args=()
 
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--branch | --pr | --s2 | --tag] [--open] [--wait-until-found] [<passthrough_arg>...]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+
+EXAMPLES
+       ${_SCRIPT_NAME}
+EOF
+}
+##################################################################################################################################################
+
 ################################################################# FILTERARGS #####################################################################
 PASSTHROUGH_ARGS=()
 while test $# -gt 0; do
   case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
     --branch)
       export JOB_URL_TYPE=branch
       ci_last_args+=("$1")
@@ -16,6 +49,11 @@ while test $# -gt 0; do
       ;;
     --pr)
       export JOB_URL_TYPE=pr
+      ci_last_args+=("$1")
+      shift
+      ;;
+    --s2)
+      export JOB_URL_TYPE=branch
       ci_last_args+=("$1")
       shift
       ;;

@@ -5,6 +5,8 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
+sort_by="${sort_by:--committerdate}"
+
 ################################################################### USAGE ########################################################################
 _SCRIPT_NAME="$(basename "$0")"
 
@@ -17,7 +19,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--all-branches] [--full] [--no-branch-arg] [--remove-dupes] [--simple] [<for_each_ref_arg>...]
+       ${_SCRIPT_NAME} [--all-branches] [--full] [--no-branch-arg] [--remove-dupes] [--simple] [--sort-by <sort_by>] [<for_each_ref_arg>...]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -50,6 +52,11 @@ while test $# -gt 0; do
       ;;
     --simple)
       simple=true
+      shift
+      ;;
+    --sort-by)
+      shift
+      sort_by="$1"
       shift
       ;;
     --)
@@ -88,7 +95,7 @@ elif check_true "${full-}"; then
   GIT_BRANCH_REF_FORMAT="${GIT_BRANCH_REF_FORMAT_FULL}"
 fi
 
-for_each_ref_args+=("${PASSTHROUGH_ARGS[@]}" --sort='-committerdate' --format="${GIT_BRANCH_REF_FORMAT}")
+for_each_ref_args+=("${PASSTHROUGH_ARGS[@]}" --sort="$sort_by" --format="${GIT_BRANCH_REF_FORMAT}")
 check_debug && echo git "${for_each_ref_args[@]}" && exit 0
 
 if check_true "${remove_dupes-}"; then

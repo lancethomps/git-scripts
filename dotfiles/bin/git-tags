@@ -3,4 +3,8 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
+if test -z "${1-}" && test -z "${sort_by-}"; then
+  export sort_by="committerdate"
+fi
+
 DEFAULT_BRANCH_ARG='refs/tags/' git branches "$@"

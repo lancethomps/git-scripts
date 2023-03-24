@@ -1,29 +1,28 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
-if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
-# shellcheck source=./.command_defaults.sh
-source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
+set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
-
-git check-supported-ci-types "${CI_GITHUB}" "${CI_JENKINS}" "${CI_TRAVIS}"
 
 ################################################################### USAGE ########################################################################
 _SCRIPT_NAME="$(basename "$0")"
 
 function _usage() {
+  local _SCRIPT_NAME_GIT
+  _SCRIPT_NAME_GIT="${_SCRIPT_NAME/git-/git }"
+
   local SYNOP_INDENT
-  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME_GIT}" | wc -c)" </dev/zero | tr '\0' " ")"
 
   cat <<EOF
 NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--branch | --pr | --s2 | --tag] [<passthrough_arg>...]
-       ${SYNOP_INDENT} [--help]
+       ${_SCRIPT_NAME_GIT} [--remote] <branch_name> [<git_for_each_ref_arg>...]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
-       ${_SCRIPT_NAME}
+       ${_SCRIPT_NAME_GIT} staging-2
 EOF
 }
 ##################################################################################################################################################
@@ -36,21 +35,16 @@ while test $# -gt 0; do
       _usage
       exit 0
       ;;
-    --branch)
-      export JOB_URL_TYPE=branch
+    --debug)
+      export debug_mode=true
       shift
       ;;
-    --pr)
-      export JOB_URL_TYPE=pr
+    --verbose)
+      export verbose=true
       shift
       ;;
-    --s2)
-      export JOB_URL_TYPE=branch
-      export job_name_override=staging-2
-      shift
-      ;;
-    --tag)
-      export JOB_URL_TYPE=tag
+    --remote)
+      remote=true
       shift
       ;;
     --)
@@ -67,16 +61,25 @@ while test $# -gt 0; do
 done
 ##################################################################################################################################################
 
-function run_travis() {
-  echo "https://app.travis-ci.com/$(git ui-url-project)/$(git ui-url-repo)"
+function main() {
+  local branch_as_ref git_args
+
+  if [[ $1 == refs/* ]]; then
+    branch_as_ref="$1"
+  elif test "${remote-}" = "true"; then
+    branch_as_ref="refs/remotes/*/$1"
+  else
+    branch_as_ref="refs/heads/$1"
+  fi
+  shift
+
+  git_args=(for-each-ref --format='%(objectname)')
+  if ! is_arg_present --count "$@"; then
+    git_args+=(--count 1)
+  fi
+  git_args+=("$@" "$branch_as_ref")
+
+  git "${git_args[@]}"
 }
 
-function run_github() {
-  echo "$(git ui-url-root)/actions"
-}
-
-function run_jenkins() {
-  jenkins_job_url_from_repo "$@"
-}
-
-"run_$(git ci-type)" "${PASSTHROUGH_ARGS[@]}"
+main "${PASSTHROUGH_ARGS[@]}"

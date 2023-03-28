@@ -3,7 +3,7 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-declare -x GREP_OPTIONS="" flags='' use_gsed=true git_grep_end_args git_grep_config_args=(-c grep.fullname=false -c submodule.recurse=false) xargs_args
+declare -x GREP_OPTIONS="" flags='' use_gsed=true git_grep_end_args xargs_args git_grep_config_args=(-c grep.fullname=false -c grep.patterntype=perl -c submodule.recurse=false)
 
 if command -v git-in-repo >/dev/null 2>&1 && ! git in-repo; then
   echo "Not in a git repo"
@@ -12,7 +12,7 @@ fi
 
 if ! command -v gsed >/dev/null 2>&1 || ! command -v pcregrep >/dev/null 2>&1 || ! command -v sd >/dev/null 2>&1; then
   if test "$(uname)" = "Darwin"; then
-    echo "gsed or pcregrep not found, running: brew install gsed pcre"
+    echo "gsed or pcregrep not found, running: brew install gsed pcre sd"
     brew install gsed pcre sd
   elif ! command -v pcregrep >/dev/null 2>&1; then
     echo "pcregrep not found and could not determine how to install it. Please install it manually."
@@ -131,7 +131,7 @@ function check_verbose() {
 }
 
 function should_use_gsed() {
-  check_true "${use_gsed-}"
+  test "${use_gsed-}" = "true"
 }
 
 function exit_failure() {

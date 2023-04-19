@@ -5,54 +5,76 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
-browse_url_root="$(git ui-url-root "$@")"
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
 
-if test -n "${1-}" && ! git in-repo; then
-  git_url="$1"
-  shift
-  git_current_branch="main"
-  git_default_branch="main"
-  git_cwd=""
-else
-  if ! git_url="$(git url)"; then
-    git url
-    exit $?
-  fi
-  if check_true "${ignore_branch-}"; then
-    git_current_branch="main"
-    git_default_branch="main"
-  else
-    git_current_branch="$(git current-branch)"
-    git_default_branch="$(git default-branch)"
-    if check_true "${use_default_branch-}"; then
-      git_current_branch="${git_default_branch}"
-    fi
-  fi
-  git_cwd="$(git rev-parse --show-prefix)"
-  if test -n "${git_cwd-}"; then
-    git_cwd="${git_cwd::-1}"
-  fi
-fi
+function _usage() {
+  local _SCRIPT_NAME_GIT
+  _SCRIPT_NAME_GIT="${_SCRIPT_NAME/git-/git }"
 
-git_current_branch_url="$(urlencode_git_current_branch "$git_current_branch")"
-scm_domain="$(echo "$git_url" | pcregrep -o3 "$GIT_URL_REGEX")"
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME_GIT}" | wc -c)" </dev/zero | tr '\0' " ")"
 
-git_repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
-if test -n "${1-}"; then
-  git_path="$1"
-  if ! test -e "${git_repo_root}/${git_path}" && test -e "${git_repo_root}/${git_cwd}/${git_path}"; then
-    git_path="${git_cwd}/${git_path}"
-  fi
-  if ! test -e "${git_path}" && ! test -e "${git_repo_root}/${git_path}" && test "${1}" = "$(basename "${git_repo_root}")"; then
-    git_path="${git_cwd}"
-  fi
-else
-  git_path="${git_cwd}"
-fi
-git_line="${2-}"
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME_GIT} [<git_url>] [<source_file> [<line_number>]]
+       ${SYNOP_INDENT} [--use-default-branch] [--use-permalink]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+
+EXAMPLES
+       ${_SCRIPT_NAME_GIT}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --use-default-branch)
+      use_default_branch=true
+      shift
+      ;;
+    --use-permalink)
+      use_permalink=true
+      shift
+      ;;
+    --)
+      shift
+      PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
 
 function github_url() {
   suffix=''
+
+  if check_true "${use_permalink-}"; then
+    git_current_branch_url="$(git branch-commit "$git_current_branch")"
+  fi
+
   if test -n "${git_path-}"; then
     if test -f "${git_repo_root}/${git_path}"; then
       suffix="${suffix}/blob"
@@ -63,9 +85,11 @@ function github_url() {
   elif test "$git_current_branch" != "$git_default_branch"; then
     suffix="${suffix}/tree/${git_current_branch_url}"
   fi
+
   if test -n "${git_line-}"; then
     suffix="${suffix}#L${git_line}"
   fi
+
   echo "${browse_url_root}${suffix}"
 }
 
@@ -97,12 +121,62 @@ function bitbucket_url() {
   echo "${browse_url_root}/browse${suffix}"
 }
 
-if test "$scm_domain" = 'github.com'; then
-  browse_url="$(github_url)"
-elif test "$scm_domain" = 'git.sr.ht'; then
-  browse_url="$(sourcehut_url)"
-else
-  browse_url="$(bitbucket_url)"
-fi
+function main() {
+  browse_url_root="$(git ui-url-root "$@")"
 
-echo "$browse_url"
+  if test -n "${1-}" && ! git in-repo; then
+    git_url="$1"
+    shift
+    git_current_branch="main"
+    git_default_branch="main"
+    git_cwd=""
+  else
+    if ! git_url="$(git url)"; then
+      git url
+      exit $?
+    fi
+    if check_true "${ignore_branch-}"; then
+      git_current_branch="main"
+      git_default_branch="main"
+    else
+      git_current_branch="$(git current-branch)"
+      git_default_branch="$(git default-branch)"
+      if check_true "${use_default_branch-}"; then
+        git_current_branch="${git_default_branch}"
+      fi
+    fi
+    git_cwd="$(git rev-parse --show-prefix)"
+    if test -n "${git_cwd-}"; then
+      git_cwd="${git_cwd::-1}"
+    fi
+  fi
+
+  git_current_branch_url="$(urlencode_git_current_branch "$git_current_branch")"
+  scm_domain="$(echo "$git_url" | pcregrep -o3 "$GIT_URL_REGEX")"
+
+  git_repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+  if test -n "${1-}"; then
+    git_path="$1"
+    if ! test -e "${git_repo_root}/${git_path}" && test -e "${git_repo_root}/${git_cwd}/${git_path}"; then
+      git_path="${git_cwd}/${git_path}"
+    fi
+    if ! test -e "${git_path}" && ! test -e "${git_repo_root}/${git_path}" && test "${1}" = "$(basename "${git_repo_root}")"; then
+      git_path="${git_cwd}"
+    fi
+  else
+    git_path="${git_cwd}"
+  fi
+  git_line="${2-}"
+
+  if test "$scm_domain" = 'github.com'; then
+    browse_url="$(github_url)"
+  elif test "$scm_domain" = 'git.sr.ht'; then
+    browse_url="$(sourcehut_url)"
+  else
+    browse_url="$(bitbucket_url)"
+  fi
+
+  echo "$browse_url"
+}
+
+main "${PASSTHROUGH_ARGS[@]}"

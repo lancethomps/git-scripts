@@ -3,4 +3,4 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-use_default_branch=true git copy-ui-url "$@"
+git copy-ui-url --use-default-branch "$@"

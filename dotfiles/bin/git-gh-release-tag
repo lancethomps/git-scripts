@@ -17,7 +17,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--major | --minor | --patch | --version <version>] [--auto-confirm]
+       ${_SCRIPT_NAME} [--major | -ma | --minor | -mi | --patch | -p | --version <version>] [--auto-confirm | -ac]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -41,19 +41,19 @@ while test $# -gt 0; do
       export verbose=true
       shift
       ;;
-    --auto-confirm)
+    --auto-confirm | -ac)
       export auto_confirm=true
       shift
       ;;
-    --major)
+    --major | -ma)
       major=true
       shift
       ;;
-    --minor)
+    --minor | -mi)
       minor=true
       shift
       ;;
-    --patch)
+    --patch | -p)
       patch=true
       shift
       ;;

@@ -22,7 +22,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [--tracked] [--use-case] <grep_args>...
+       ${_SCRIPT_NAME_GIT} [--main] [--tests] [--tracked] [--use-case] <grep_args>...
        ${SYNOP_INDENT}     [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -46,6 +46,14 @@ while test $# -gt 0; do
     --verbose)
       shift
       export verbose=true
+      ;;
+    --main)
+      main=true
+      shift
+      ;;
+    --tests)
+      tests=true
+      shift
       ;;
     --tracked)
       tracked=true
@@ -104,6 +112,20 @@ function create_open_grepped_lines_args() {
 }
 
 _GREP_ARGS+=("$@")
+
+if check_true "${main-}"; then
+  if ! is_arg_present -- "${_GREP_ARGS[@]}"; then
+    _GREP_ARGS+=(--)
+  fi
+  _GREP_ARGS+=(':(glob)**/main/**')
+fi
+
+if check_true "${tests-}"; then
+  if ! is_arg_present -- "${_GREP_ARGS[@]}"; then
+    _GREP_ARGS+=(--)
+  fi
+  _GREP_ARGS+=(':(glob)**/test/**')
+fi
 
 if ! test -t 1; then
   git grep "${_GREP_ARGS[@]}"

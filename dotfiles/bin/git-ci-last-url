@@ -17,7 +17,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--branch | --pr | --s2 | --tag] [--open] [--wait-until-found] [<passthrough_arg>...]
+       ${_SCRIPT_NAME} [--branch | --pr | --s2 | --tag] [--open] [--running] [--wait-until-found] [<passthrough_arg>...]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -49,6 +49,11 @@ while test $# -gt 0; do
       ;;
     --pr)
       export JOB_URL_TYPE=pr
+      ci_last_args+=("$1")
+      shift
+      ;;
+    --running)
+      export running=true
       ci_last_args+=("$1")
       shift
       ;;

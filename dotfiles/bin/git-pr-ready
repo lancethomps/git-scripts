@@ -15,7 +15,8 @@ function main() {
     curr_branch="$(git current-branch)"
   fi
 
-  log_and_run_surround gh pr list --head "$curr_branch"
+  check_verbose && log_and_run_surround gh pr list --head "$curr_branch"
+
   log_and_run gh pr ready "$@"
 }
 

@@ -4,9 +4,7 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 function main() {
-  local latest_tag_semver
-  latest_tag_semver="$(git version-tags "$@" | head -1)"
-  echo "v${latest_tag_semver}"
+  git tags --simple "$@" | pcregrep '^v[0-9]+\.[0-9]+\.[0-9]+.*' | semver_sort --remove-prefix v -
 }
 
 main "$@"

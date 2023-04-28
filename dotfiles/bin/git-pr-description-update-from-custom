@@ -6,18 +6,22 @@ source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
+function update_body() {
+  log_and_run gh pr edit --body "$@"
+}
+
 function main() {
-  local curr_branch
+  local description
 
-  if test -n "${1-}" && git is-valid-branch "${1-}"; then
-    curr_branch="$1"
-  else
-    curr_branch="$(git current-branch)"
+  log_and_run_surround gh pr list
+  description="$(git pr-description-custom)"
+  log_with_title_sep "DESCRIPTION"
+  echo "$description"
+  log_sep
+  if ! confirm_with_auto "Update PR description with above?"; then
+    exit 1
   fi
-
-  check_verbose && log_and_run_surround gh pr list --head "$curr_branch"
-
-  log_and_run gh pr merge "$@" --auto --delete-branch --merge
+  update_body "${description}"
 }
 
 main "$@"

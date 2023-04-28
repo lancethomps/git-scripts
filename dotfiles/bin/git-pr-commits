@@ -48,6 +48,7 @@ git_log_args+=(
   "$@"
   "${git_current_branch}"
   "^${PR_TO_REF}"
+  --
 )
 
 git log "${git_log_args[@]}"

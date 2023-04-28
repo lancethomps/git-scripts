@@ -17,7 +17,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--branch | --pr | --s2 | --tag] [--open] [--running] [--wait-until-found] [<passthrough_arg>...]
+       ${_SCRIPT_NAME} [--branch | --pr | --s2 | --tag] [--open] [--running | -r] [--wait-until-found | -w] [<passthrough_arg>...]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -52,7 +52,7 @@ while test $# -gt 0; do
       ci_last_args+=("$1")
       shift
       ;;
-    --running)
+    --running | -r)
       export running=true
       ci_last_args+=("$1")
       shift
@@ -71,7 +71,7 @@ while test $# -gt 0; do
       open=true
       shift
       ;;
-    --wait-until-found)
+    --wait-until-found | -w)
       export wait_until_found=true
       ci_last_args+=("$1")
       shift

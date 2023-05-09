@@ -9,7 +9,7 @@ set -o errexit -o errtrace -o nounset
 function main() {
   local prs_all_args=()
 
-  if ! is_arg_present --head "$@"; then
+  if ! is_arg_present --head "$@" && ! git is-default-branch; then
     prs_all_args+=(--head "$(git current-branch)")
   fi
 

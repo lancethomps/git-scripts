@@ -20,7 +20,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [--no-body] [--no-open] [--simple] [--to-ref <to_ref>]
+       ${_SCRIPT_NAME_GIT} [--no-body] [--no-open] [--simple] [--to-ref <to_ref>] [--title | -t <title]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -54,6 +54,11 @@ while test $# -gt 0; do
       ;;
     --simple)
       simple=true
+      shift
+      ;;
+    --title | -t)
+      shift
+      title="$1"
       shift
       ;;
     --to-ref)
@@ -97,8 +102,12 @@ function github_url() {
     return 0
   fi
 
+  if test -z "${title-}"; then
+    title="$(git pr-title)"
+  fi
+
   url_base="${browse_url_root}/compare/${PR_TO_REF}...${git_current_branch_url}"
-  query_params+=("title=$(git pr-title --urlencode)")
+  query_params+=("title=$(url_encode_py "$title")")
 
   if ! check_true "${no_body-}"; then
     if command -v git-pr-description-custom >/dev/null 2>&1; then

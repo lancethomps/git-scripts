@@ -13,7 +13,7 @@ while test $# -gt 0; do
       running=true
       shift
       ;;
-    --wait-until-found)
+    --wait-until-found | -w)
       wait_until_found=true
       shift
       ;;

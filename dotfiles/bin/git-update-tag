@@ -14,7 +14,7 @@ fi
 
 function main() {
   log_and_run git tag --force "$TAG_NAME" "$@"
-  log_and_run git push --tags --force origin "$TAG_NAME"
+  log_and_run git push --force origin "$TAG_NAME"
 }
 
 main "$@"

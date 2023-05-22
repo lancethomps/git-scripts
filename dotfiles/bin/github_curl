@@ -7,6 +7,9 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 temp_file="$(mktemp)"
+if test -z "${GITHUB_CREDS-}"; then
+  GITHUB_CREDS="$(git config --get user.name):${GITHUB_TOKEN}"
+fi
 
 ################################################################### CLEANUP ######################################################################
 function cleanup() {
@@ -21,7 +24,7 @@ trap cleanup EXIT INT TERM
 
 curl_args=(
   --silent
-  --user "$(git config --get user.name):${GITHUB_TOKEN}"
+  --user "$GITHUB_CREDS"
   -o "$temp_file"
   -w '%{http_code}'
   -i

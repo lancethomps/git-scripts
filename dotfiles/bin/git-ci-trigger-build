@@ -22,6 +22,7 @@ NAME
 
 SYNOPSIS
        ${_SCRIPT_NAME} [--param | -p <param>] [<passthrough_arg>...]
+       ${SYNOP_INDENT} [--deploy-playground | --deploy-prod] [--gradle-build-cache-disabled] [--gradle-build-profile] [--gradle-build-scan] [--gradle-cache-refresh] [--gradle-publish | --gradle-publish-snapshot]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -44,6 +45,38 @@ while test $# -gt 0; do
       ;;
     --verbose)
       export verbose=true
+      shift
+      ;;
+    --deploy-playground)
+      build_params+=("DEPLOY_PLAYGROUND=true")
+      shift
+      ;;
+    --deploy-prod)
+      build_params+=("DEPLOY_PROD=true")
+      shift
+      ;;
+    --gradle-build-cache-disabled)
+      build_params+=("GRADLE_BUILD_CACHE_DISABLED=true")
+      shift
+      ;;
+    --gradle-build-profile)
+      build_params+=("GRADLE_BUILD_PROFILE=true")
+      shift
+      ;;
+    --gradle-build-scan)
+      build_params+=("GRADLE_BUILD_SCAN=true")
+      shift
+      ;;
+    --gradle-cache-refresh)
+      build_params+=("GRADLE_CACHE_DISABLED=true" "GRADLE_CACHE_FORCE_UPLOAD=true")
+      shift
+      ;;
+    --gradle-publish)
+      build_params+=("GRADLE_PUBLISH=true")
+      shift
+      ;;
+    --gradle-publish-snapshot)
+      build_params+=("GRADLE_PUBLISH_SNAPSHOT=true")
       shift
       ;;
     --param | -p)

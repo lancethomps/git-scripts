@@ -3,9 +3,4 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-function main() {
-  git pr-ready-approve
-  git pr-auto-merge "$@"
-}
-
-main "$@"
+test "$(pwd)" = "$(git base-dir)"

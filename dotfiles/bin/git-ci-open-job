@@ -15,7 +15,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--branch | --pr | --tag] [<passthrough_arg>...]
+       ${_SCRIPT_NAME} [--branch | --main | --pr | --s2 | --tag] [<passthrough_arg>...]
        ${SYNOP_INDENT} [--help]
 
 EXAMPLES
@@ -36,8 +36,18 @@ while test $# -gt 0; do
       export JOB_URL_TYPE=branch
       shift
       ;;
+    --main)
+      # shellcheck disable=SC2155
+      export job_name_override="$(git default-branch)"
+      shift
+      ;;
     --pr)
       export JOB_URL_TYPE=pr
+      shift
+      ;;
+    --s2)
+      export JOB_URL_TYPE=branch
+      export job_name_override=staging-2
       shift
       ;;
     --tag)

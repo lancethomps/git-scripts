@@ -22,7 +22,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [--main] [--tests] [--tracked] [--use-case] <grep_args>...
+       ${_SCRIPT_NAME_GIT} [--main] [--tests] [--tracked] [--use-case] [--with-ls-files] <grep_args>...
        ${SYNOP_INDENT}     [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -60,8 +60,12 @@ while test $# -gt 0; do
       shift
       ;;
     --use-case)
-      shift
       use_case=true
+      shift
+      ;;
+    --with-ls-files)
+      with_ls_files=true
+      shift
       ;;
     --)
       shift
@@ -78,6 +82,10 @@ if test -z "${1-}"; then
   exit 1
 fi
 ##################################################################################################################################################
+
+if check_true "${with_ls_files-}" && test "$#" -gt 1; then
+  exit_fatal "--with-ls-files only supports a single regex argument"
+fi
 
 if check_not_true "${use_case-}" && ! [[ ${*: -1} =~ [A-Z] ]]; then
   _GREP_ARGS+=(-i)
@@ -109,6 +117,13 @@ function create_open_grepped_lines_args() {
     --select-preview-file-cmd "$(create_preview_file_cmd "$@")"
   )
   export open_grepped_lines_args
+}
+
+function get_output() {
+  if check_true "${with_ls_files-}"; then
+    git -P ls-files -- ":(glob)**${1}**"
+  fi
+  git -P grep "${_GREP_ARGS[@]}"
 }
 
 _GREP_ARGS+=("$@")
@@ -145,7 +160,7 @@ fi
 
 if command -v open_grepped_lines >/dev/null 2>&1; then
   create_open_grepped_lines_args "$@"
-  git grep "${_GREP_ARGS[@]}" | open_grepped_lines "${open_grepped_lines_args[@]}" -
+  get_output "$@" | open_grepped_lines "${open_grepped_lines_args[@]}" -
 else
-  git grep "${_GREP_ARGS[@]}"
+  get_output "$@" "${_GREP_ARGS[@]}"
 fi

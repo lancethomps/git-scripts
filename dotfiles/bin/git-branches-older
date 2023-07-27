@@ -30,7 +30,7 @@ while read -r branch_info; do
   else
     newer_branches="${newer_branches}${branch_info}"$'\n'
   fi
-done < <(git branches refs/remotes/origin --color=always "$@" | grep -v -E "$GIT_BRANCH_SKIP_REGEX")
+done < <(git branches refs/remotes/origin --color=always "$@" | grep -v -E "$(git_branch_skip_regex)")
 
 if test -n "$newer_branches"; then
   newer_branches="${newer_branches::-1}"

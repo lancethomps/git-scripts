@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
 if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
-# shellcheck source=./.command_defaults.sh
-source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
+# shellcheck source=./.common_copy.sh
+source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
+set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-set_git_branch_target_if_missing
+function main() {
+  log_and_run gh pr merge --delete-branch --merge "$@"
+}
 
-git branches refs/remotes --color=always --merged="${GIT_BRANCH_TARGET}" "$@" | grep -v -E "$(git_branch_skip_regex)"
+main "$@"

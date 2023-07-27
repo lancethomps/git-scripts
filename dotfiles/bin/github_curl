@@ -51,7 +51,7 @@ function try_curl_with_rate_limit_handling() {
     echo "$headers_output" >"$debug_file_headers"
     echo "$json_output" >"$debug_file_json"
 
-    reset_time="$(pcre -o1 '^x\-ratelimit\-reset\: (.*?)$' "$debug_file_headers")"
+    reset_time="$(pcregrep -o1 '^x\-ratelimit\-reset\: (.*?)$' "$debug_file_headers")"
     if command -v epoch_converter >/dev/null 2>&1; then
       reset_time="$(epoch_converter --iso "$reset_time")"
     fi

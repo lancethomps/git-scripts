@@ -24,8 +24,8 @@ done
 CURRENT_BRANCH_NAME="$(git current-branch)"
 BRANCH_NAME="${PASSTHROUGH_ARGS[0]:-$CURRENT_BRANCH_NAME}"
 
-if echo " ${BRANCH_NAME}" | pcregrep --quiet "$GIT_BRANCH_SKIP_REGEX"; then
-  echo "Cannot delete branch '${BRANCH_NAME}' because it matched the GIT_BRANCH_SKIP_REGEX: ${GIT_BRANCH_SKIP_REGEX}"
+if echo " ${BRANCH_NAME}" | pcregrep --quiet "$(git_branch_skip_regex)"; then
+  echo "Cannot delete branch '${BRANCH_NAME}' because it matched the GIT_BRANCH_SKIP_REGEX: $(git_branch_skip_regex)"
   exit 1
 fi
 

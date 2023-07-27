@@ -77,29 +77,39 @@ function has_branch_arg_as_first_arg() {
   test "${#PASSTHROUGH_ARGS[@]}" -ne 0 && check_not_true "${no_branch_arg-}"
 }
 
-for_each_ref_args=(for-each-ref)
-if check_not_true "${all_branches-}" && ! has_branch_arg_as_first_arg; then
-  if test -n "${DEFAULT_BRANCH_ARG-}"; then
-    for_each_ref_args+=("${DEFAULT_BRANCH_ARG}")
-  else
-    for_each_ref_args+=(
-      refs/heads/
-      refs/remotes/origin/
-    )
+function main() {
+  local for_each_ref_args ref_format
+
+  for_each_ref_args=(for-each-ref)
+  if check_not_true "${all_branches-}" && ! has_branch_arg_as_first_arg; then
+    if test -n "${DEFAULT_BRANCH_ARG-}"; then
+      for_each_ref_args+=("${DEFAULT_BRANCH_ARG}")
+    else
+      for_each_ref_args+=(
+        refs/heads/
+        refs/remotes/origin/
+      )
+    fi
   fi
-fi
 
-if check_true "${simple-}"; then
-  GIT_BRANCH_REF_FORMAT='%(refname:short)'
-elif check_true "${full-}"; then
-  GIT_BRANCH_REF_FORMAT="${GIT_BRANCH_REF_FORMAT_FULL}"
-fi
+  if check_true "${simple-}"; then
+    ref_format='%(refname:short)'
+  elif check_true "${full-}"; then
+    ref_format="$(git_branch_ref_format_full)"
+  elif test -n "${GIT_BRANCH_REF_FORMAT-}"; then
+    ref_format="${GIT_BRANCH_REF_FORMAT}"
+  else
+    ref_format="$(git_branch_ref_format)"
+  fi
 
-for_each_ref_args+=("${PASSTHROUGH_ARGS[@]}" --sort="$sort_by" --format="${GIT_BRANCH_REF_FORMAT}")
-check_debug && echo git "${for_each_ref_args[@]}" && exit 0
+  for_each_ref_args+=("${PASSTHROUGH_ARGS[@]}" --sort="$sort_by" --format="${ref_format}")
+  check_debug && echo git "${for_each_ref_args[@]}" && exit 0
 
-if check_true "${remove_dupes-}"; then
-  log_verbose_and_run git "${for_each_ref_args[@]}" --color=always | gsed -r 's/\borigin\///g' | sort -r -u
-else
-  log_verbose_and_run git "${for_each_ref_args[@]}"
-fi
+  if check_true "${remove_dupes-}"; then
+    log_verbose_and_run git "${for_each_ref_args[@]}" --color=always | gsed -r 's/\borigin\///g' | sort -r -u
+  else
+    log_verbose_and_run git "${for_each_ref_args[@]}"
+  fi
+}
+
+main

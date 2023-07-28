@@ -17,7 +17,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--major | -ma | --minor | -mi | --patch | -p | --version <version>] [--auto-confirm | -ac]
+       ${_SCRIPT_NAME} [--major | -ma | --minor | -mi | --patch | -p | --version <version>] [--auto-confirm | -ac] [--use-current-branch]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -55,6 +55,10 @@ while test $# -gt 0; do
       ;;
     --patch | -p)
       patch=true
+      shift
+      ;;
+    --use-current-branch)
+      use_current_branch=true
       shift
       ;;
     --version)
@@ -114,6 +118,10 @@ function main() {
   get_last_tag
   get_next_tag
   gh_args=(release create "v${next_tag}" --generate-notes)
+
+  if check_true "${use_current_branch-}"; then
+    gh_args+=(--target "$(git current-branch)")
+  fi
 
   if confirm_with_auto "Release tag version (${last_tag} -> ${next_tag}) via 'gh ${gh_args[*]}'?"; then
     gh "${gh_args[@]}"

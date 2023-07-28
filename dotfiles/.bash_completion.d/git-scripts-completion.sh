@@ -50,6 +50,7 @@ function _create_wrapped_git_completion() {
 _create_wrapped_git_completion_allopt_only \
   gh-release-tag \
   poll-pr-then-gh-release-tag \
+  pr-approve-poll-release \
   prs-select \
   prs-select-url
 

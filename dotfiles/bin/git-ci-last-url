@@ -47,6 +47,11 @@ while test $# -gt 0; do
       ci_last_args+=("$1")
       shift
       ;;
+    --main)
+      export JOB_URL_TYPE=branch
+      ci_last_args+=("$1")
+      shift
+      ;;
     --pr)
       export JOB_URL_TYPE=pr
       ci_last_args+=("$1")

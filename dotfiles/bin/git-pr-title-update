@@ -78,7 +78,10 @@ function main() {
     title="$(git pr-get-title) $title"
   fi
 
-  log_and_run_surround gh pr list
+  if check_debug_or_verbose; then
+    log_and_run_surround gh pr list
+  fi
+
   update_title "$title"
 }
 

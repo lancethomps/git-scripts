@@ -6,6 +6,8 @@ source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
+#GraphQL: Merge commits are not allowed on this repository. (mergePullRequest)
+
 function main() {
   log_and_run gh pr merge --delete-branch --merge "$@"
 }

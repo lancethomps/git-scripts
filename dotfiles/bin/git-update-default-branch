@@ -3,4 +3,4 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git fetch-branch-origin "$(git default-branch)" "$@"
+git remote set-head origin --auto

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+function main() {
+  local branch_name="${1-}" gh_args=(
+    --json "number,url"
+  )
+
+  if test -z "${branch_name-}"; then
+    branch_name="$(git current-branch)"
+  fi
+  gh_args+=(--head "$branch_name")
+
+  gh pr list "${gh_args[@]}"
+}
+
+main "$@"

@@ -7,7 +7,7 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 function main() {
-  local curr_branch
+  local curr_branch gh_args=(pr merge "$@" --auto --delete-branch) gh_add_args=()
 
   if test -n "${1-}" && git is-valid-branch "${1-}"; then
     curr_branch="$1"
@@ -17,7 +17,15 @@ function main() {
 
   check_verbose && log_and_run_surround gh pr list --head "$curr_branch"
 
-  log_and_run gh pr merge "$@" --auto --delete-branch --merge
+  if ! is_arg_present --squash "${gh_args[@]}" && ! is_arg_present --merge "${gh_args[@]}"; then
+    gh_add_args+=(--merge)
+  fi
+
+  if ! log_and_run gh "${gh_args[@]}" "${gh_add_args[@]}"; then
+    log_and_run gh "${gh_args[@]}" --squash
+  fi
+
+  return 0
 }
 
 main "$@"

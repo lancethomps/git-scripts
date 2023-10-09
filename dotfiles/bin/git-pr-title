@@ -4,7 +4,8 @@
 import argparse
 import os
 
-from ltpylib import opts, procs
+from ltpylib import opts, opts_actions
+from ltpylib.gitrepos import run_git_cmd_stdout
 from ltpylib.strconverters import url_encode
 
 
@@ -14,16 +15,20 @@ class ScriptArgs(opts.BaseArgs):
     super().__init__(args)
 
     self.to_ref: str = args.to_ref if args.to_ref else os.getenv("PR_TO_REF")
+    self.use_branch: bool = args.use_branch
     self.urlencode: bool = args.urlencode
 
     if not self.to_ref:
-      self.to_ref = run_git_command("default-branch")
+      self.to_ref = run_git_cmd_stdout("default-branch").strip()
 
 
 def main():
   args = _parse_args()
-  current_branch = run_git_command("current-branch")
-  output = current_branch
+  pr_description = None if args.use_branch else run_git_cmd_stdout("pr-description").strip()
+  if pr_description and len(pr_description.splitlines()) == 1:
+    output = pr_description
+  else:
+    output = run_git_cmd_stdout("current-branch").strip()
 
   if args.urlencode:
     output = url_encode(output)
@@ -31,16 +36,11 @@ def main():
   print(output)
 
 
-def run_git_command(*git_args) -> str:
-  git_command = ["git"]
-  git_command.extend(git_args)
-  return procs.run_and_parse_output(git_command, check=True)[1].strip()
-
-
 def _parse_args() -> ScriptArgs:
   arg_parser = opts.create_default_arg_parser()
 
   arg_parser.add_argument("--to-ref")
+  arg_parser.add_argument("--use-branch", action=opts_actions.STORE_TRUE)
   arg_parser.add_argument("--urlencode", action=argparse.BooleanOptionalAction)
 
   return ScriptArgs(opts.parse_args_and_init_others(arg_parser))

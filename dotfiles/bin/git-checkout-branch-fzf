@@ -7,17 +7,30 @@ source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
 
 GIT_BRANCH="$("${_SCRIPT_DIR}/git-select-branch" "$@")"
 
+function do_pull() {
+  if check_not_debug && check_not_false "${SKIP_PULL-}"; then
+    git pull
+  else
+    exit 0
+  fi
+}
+
 if test -z "${GIT_BRANCH-}"; then
   echo "ERROR no GIT_BRANCH selected"
   exit 1
 elif check_debug; then
   echo "DEBUG git checkout ${GIT_BRANCH}"
 else
-  git checkout "${GIT_BRANCH}"
-fi
-
-if check_not_debug && check_not_false "${SKIP_PULL-}"; then
-  git pull
-else
-  exit 0
+  if ! git checkout "${GIT_BRANCH}" && git is-dirty; then
+    if confirm_with_auto "Stash changes first?"; then
+      log_and_run git create-stash -m "git checkout-branch-fzf auto stash"
+      log_and_run git checkout "${GIT_BRANCH}"
+      do_pull || true
+      log_and_run git stash pop
+    else
+      exit 1
+    fi
+  else
+    do_pull
+  fi
 fi

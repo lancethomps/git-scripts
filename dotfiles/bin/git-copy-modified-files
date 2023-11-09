@@ -94,8 +94,9 @@ if ! test -e "${COPY_DIR}"; then
   exit 1
 fi
 
+GIT_PREFIX_DIR="$(git relative-dir)"
 COPY_DIR="$(realpath "$COPY_DIR")"
-DEST_DIR="${COPY_DIR}/"
+DEST_DIR="${COPY_DIR}/${GIT_PREFIX_DIR}"
 SOURCE_DIR=""
 MODIFIED_FILES_CMD=()
 if test "$DIRECTION" = "incoming"; then

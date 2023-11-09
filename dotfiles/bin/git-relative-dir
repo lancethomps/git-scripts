@@ -3,7 +3,4 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-{
-  git --no-pager diff --name-only --relative HEAD "$@"
-  git untracked
-} | sort -u
+git rev-parse --show-prefix "$@"

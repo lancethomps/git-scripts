@@ -7,8 +7,9 @@ source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
 
 GIT_CURRENT_BRANCH="$(git current-branch)"
 _GIT_ARGS=(
-  "$@"
+  "${1-}"
   --name-only
+  "${@:2}"
 )
 
 function create_open_grepped_lines_args() {

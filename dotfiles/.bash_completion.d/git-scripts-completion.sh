@@ -72,7 +72,9 @@ _create_wrapped_git_completion grep \
 
 _create_wrapped_git_completion ls-files \
   ignored \
-  select-files
+  ls-files-all \
+  select-files \
+  untracked
 
 _create_wrapped_git_completion rebase \
   rebase-side-branch-commits

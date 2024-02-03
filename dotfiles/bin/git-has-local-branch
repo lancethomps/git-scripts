@@ -3,11 +3,4 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-branch_name="${1-}"
-if test -z "${branch_name-}"; then
-  if ! branch_name="$(git current-branch)"; then
-    exit 1
-  fi
-fi
-
-git ls-remote --exit-code --heads origin "refs/heads/$branch_name" >/dev/null 2>&1
+test -n "$(git -P branch --list "$@")"

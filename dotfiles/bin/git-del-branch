@@ -39,15 +39,19 @@ else
   git push --delete origin "${BRANCH_NAME}"
 fi
 
+has_local=false
 if test "${CURRENT_BRANCH_NAME}" = "${BRANCH_NAME}"; then
+  has_local=true
   git checkout "$(git default-branch)"
+elif git has-local-branch "$BRANCH_NAME"; then
+  has_local=true
 fi
 
-if ! git branch -d "${BRANCH_NAME}"; then
+if test "${has_local-}" = "true" && ! git branch -d "${BRANCH_NAME}"; then
   if ! confirm_with_auto "Force delete local branch '${BRANCH_NAME}'?"; then
     exit 1
   fi
   git branch -D "${BRANCH_NAME}"
-else
-  exit 0
 fi
+
+exit 0

@@ -55,7 +55,6 @@ _create_wrapped_git_completion_allopt_only \
   prs-select-url
 
 _create_wrapped_git_completion branch \
-  del-branch \
   diff-to-branch \
   diff-to-branch-files \
   diff-to-branch-fzf \
@@ -63,6 +62,9 @@ _create_wrapped_git_completion branch \
   merge-branch-fzf \
   pr \
   update-tag
+
+_create_wrapped_git_completion checkout \
+  del-branch
 
 _create_wrapped_git_completion grep \
   grep-bash \

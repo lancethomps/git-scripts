@@ -78,6 +78,10 @@ _create_wrapped_git_completion ls-files \
   select-files \
   untracked
 
+_create_wrapped_git_completion ls-remote \
+  has-remote \
+  has-remote-branch
+
 _create_wrapped_git_completion merge \
   fork-merge-upstream
 

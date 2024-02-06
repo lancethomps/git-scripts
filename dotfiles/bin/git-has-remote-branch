@@ -3,9 +3,14 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-revision_range='@{upstream}'
-if ! git has-remote-branch; then
-  revision_range="$(git log --max-count=30 --oneline --decorate | pcregrep -o1 '^([^\s]+) \([^\)]*origin\/' | head -1)"
+branch_name="${1-}"
+
+if test -z "${branch_name-}"; then
+  if ! branch_name="$(git current-branch)"; then
+    exit 1
+  fi
+else
+  shift
 fi
 
-echo "${revision_range}..HEAD"
+git ls-remote "$@" --exit-code --heads origin "refs/heads/$branch_name" >/dev/null 2>&1

@@ -8,4 +8,4 @@ if ! git has-outgoing-commits-files; then
   exit 0
 fi
 
-make lint-bash
+time make lint-bash

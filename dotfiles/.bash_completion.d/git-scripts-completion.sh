@@ -78,7 +78,11 @@ _create_wrapped_git_completion ls-files \
   select-files \
   untracked
 
+_create_wrapped_git_completion merge \
+  fork-merge-upstream
+
 _create_wrapped_git_completion rebase \
+  fork-rebase-upstream \
   rebase-side-branch-commits
 
 _create_wrapped_git_completion reset \

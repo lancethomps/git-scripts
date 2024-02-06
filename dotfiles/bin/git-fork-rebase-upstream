@@ -4,4 +4,4 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 git fetch upstream
-git merge "upstream/$(git current-branch)" "$@"
+git rebase "upstream/$(git current-branch)" "$@"

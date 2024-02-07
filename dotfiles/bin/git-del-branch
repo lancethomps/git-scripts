@@ -10,7 +10,7 @@ PASSTHROUGH_ARGS=()
 while test $# -gt 0; do
   case "$1" in
     --auto-confirm)
-      auto_confirm=true
+      export auto_confirm=true
       shift
       ;;
     *)

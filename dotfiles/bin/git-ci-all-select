@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+JQ_CMD='.[] | "\(.url) | \(.cause) | \(.commitDate) | \(.commitAuthor) | \(.commitMsg)"'
+
+function main() {
+  set -o pipefail
+  git ci-all "$@" | jq --exit-status -r "$JQ_CMD" | fzf --ansi --no-sort --layout "reverse" | pcregrep -o1 '^([^\s]+)\s'
+}
+
+main "$@"

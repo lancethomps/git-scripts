@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./.common_copy.sh
+source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+TREE_PARAM="builds[building,displayName,fullDisplayName,id,number,result,timestamp,url,changeSets[items[*]],actions[causes[*]]{0,3}]{0,20}"
+JQ_CMD_INNER='
+.builds[]
+| .commitDate = .changeSets[0].items[0].date
+| .commitAuthor = .changeSets[0].items[0].authorEmail
+| .commitMsg = .changeSets[0].items[0].msg
+| .cause = (.actions[] | select(._class == "hudson.model.CauseAction") | .causes[0].shortDescription)
+'
+JQ_CMD_RUNNING="[${JQ_CMD_INNER} | select(.building)]"
+JQ_CMD_ALL="[${JQ_CMD_INNER}]"
+
+declare -x api_url jq_cmd
+
+################################################################# FILTERARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    --running | -r)
+      running=true
+      shift
+      ;;
+    --wait-until-found | -w)
+      wait_until_found=true
+      shift
+      ;;
+    --)
+      shift
+      PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+function output_response_check_valid() {
+  if ! echo "$1" | jq --sort-keys --exit-status; then
+    return 1
+  fi
+  return 0
+}
+
+function need_to_wait_for_running() {
+  if test "${wait_until_found-}" = "true"; then
+    test "$(echo "$1" | jq 'length')" -eq 0
+  else
+    return 1
+  fi
+}
+
+function get_api_response() {
+  if ! api_response="$(jenkins_curl "$api_url" | jq --exit-status --sort-keys "$jq_cmd")" || test -z "${api_response-}" || ! output_response_check_valid "$api_response" >/dev/null 2>&1; then
+    if test "${wait_until_found-}" = "true"; then
+      log_stderr "No builds found, waiting to retry..."
+      sleep 1
+      get_api_response
+      return $?
+    fi
+  elif need_to_wait_for_running "${api_response}"; then
+    log_stderr "No running builds found, waiting to retry..."
+    sleep 1
+    get_api_response
+    return $?
+  fi
+  echo "$api_response"
+}
+
+function main() {
+  git check-supported-ci-types jenkins
+
+  if check_true "${running-}"; then
+    jq_cmd="$JQ_CMD_RUNNING"
+  else
+    jq_cmd="$JQ_CMD_ALL"
+  fi
+
+  if ! api_url="$(git ci-job-url "$@")/api/json?tree=$(url_encode_py "$TREE_PARAM")"; then
+    exit 1
+  fi
+
+  api_response="$(get_api_response)"
+
+  if ! output_response_check_valid "$api_response"; then
+    log_stderr "ERROR Problem with Jenkins response from ${api_url} - output below"
+    log_stderr "$api_response"
+    exit 1
+  fi
+
+  exit 0
+}
+
+main "${PASSTHROUGH_ARGS[@]}"

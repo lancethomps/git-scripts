@@ -56,7 +56,7 @@ git_clean_args+=("${PASSTHROUGH_ARGS[@]}")
 files_to_remove="$(git clean --dry-run "${git_clean_args[@]}")"
 echo "$files_to_remove"
 log_sep
-log_verbose git clean "${git_clean_args[@]}"
+log_verbose "$(get_args_quoted git clean "${git_clean_args[@]}")"
 
 if test -z "${files_to_remove-}"; then
   exit 0

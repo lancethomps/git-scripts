@@ -18,7 +18,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--all | -a] [--base-branch <base_branch>] [--lang <lang>] [--no-include-resolved-tests] [--no-origin | --origin]
+       ${_SCRIPT_NAME} [--all | -a] [--base-branch <base_branch>] [--cd-to-git-base-dir] [--lang <lang>] [--no-include-resolved-tests] [--no-origin | --origin]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
        ${SYNOP_INDENT} [<passthrough_arg>...]
 
@@ -45,12 +45,12 @@ while test $# -gt 0; do
       shift
       ;;
     --all | -a)
-      all=true
+      export all=true
       shift
       ;;
     --base-branch)
       shift
-      base_branch="$1"
+      export base_branch="$1"
       shift
       ;;
     --cd-to-git-base-dir)
@@ -63,15 +63,15 @@ while test $# -gt 0; do
       shift
       ;;
     --no-include-resolved-tests)
-      no_include_resolved_tests=true
+      export no_include_resolved_tests=true
       shift
       ;;
     --no-origin)
-      origin=false
+      export origin=false
       shift
       ;;
     --origin)
-      origin=true
+      export origin=true
       shift
       ;;
     --)
@@ -88,7 +88,7 @@ while test $# -gt 0; do
 done
 ##################################################################################################################################################
 
-declare -x modified_files=()
+declare -x modified_files=() git_modified_default_args=(--diff-filter=d)
 
 function _add_existing_test_files() {
   local source_file="$1" maybe_tests maybe_test found_test
@@ -117,13 +117,13 @@ function _add_existing_test_files() {
 }
 
 function _run_git_test_files_kotlin() {
-  debug_mode=false use_pager=false log_and_run_no_sep git "$@" -- '*src/test/*Test.*'
+  debug_mode=false use_pager=false log_and_run_no_sep git modified-with-remote "${git_modified_default_args[@]}" "$@" -- '*src/test/*Test.*'
 }
 
 function _run_git_source_files_kotlin() {
   local modified_source_files source_file source_file_name test_file_prefix source_file_ext maybe_tests
 
-  mapfile -t modified_source_files < <(debug_mode=false use_pager=false log_and_run_no_sep git "$@" -- '*src/main/*' | rg 'src/main/(java|kotlin)/.*\.(java|kts?)$')
+  mapfile -t modified_source_files < <(debug_mode=false use_pager=false log_and_run_no_sep git modified-with-remote "${git_modified_default_args[@]}" "$@" -- '*src/main/*' | rg 'src/main/(java|kotlin)/.*\.(java|kts?)$')
 
   for source_file in "${modified_source_files[@]}"; do
     source_file_name="$(basename "$source_file")"
@@ -143,13 +143,13 @@ function _run_git_source_files_kotlin() {
 }
 
 function _run_git_test_files_ruby() {
-  debug_mode=false use_pager=false log_and_run_no_sep git "$@" -- '*spec*.rb' | rg '.*spec.*\.rb$' | rg -v '.*/(factories|helpers)/.*'
+  debug_mode=false use_pager=false log_and_run_no_sep git modified-with-remote "${git_modified_default_args[@]}" "$@" -- '*spec*.rb' | rg '.*spec.*\.rb$' | rg -v '.*/(factories|helpers)/.*'
 }
 
 function _run_git_source_files_ruby() {
-  local modified_source_files source_file source_file_engine source_file_context source_file_as_test maybe_tests maybe_test found_test
+  local modified_source_files source_file source_file_engine source_file_context source_file_as_test maybe_tests
 
-  mapfile -t modified_source_files < <(debug_mode=false use_pager=false log_and_run_no_sep git "$@" | rg 'engines/.*\.rb$' | rg -v '.*spec.*')
+  mapfile -t modified_source_files < <(debug_mode=false use_pager=false log_and_run_no_sep git modified-with-remote "${git_modified_default_args[@]}" "$@" -- 'engines/*.rb' | rg -v '.*spec.*')
 
   for source_file in "${modified_source_files[@]}"; do
     source_file_engine="$(echo "$source_file" | pcregrep -o1 '^engines/(.*?)/')"
@@ -195,21 +195,7 @@ function resolve_lang_if_needed() {
 }
 
 function pull_modified_files() {
-  local git_args=(modified) test_files_func="_run_git_test_files_${lang}" source_files_func="_run_git_source_files_${lang}" modified_source_files source_file source_file_engine source_file_context source_file_as_test maybe_tests maybe_test
-
-  if check_true "${all-}"; then
-    if test -z "${base_branch-}"; then
-      base_branch="$(git default-branch)"
-    fi
-
-    if check_true "${origin-}"; then
-      base_branch="origin/$base_branch"
-    fi
-
-    git_args=(diff-to-branch-files "${base_branch}")
-  fi
-
-  git_args+=(--diff-filter=d)
+  local git_args=("$@") test_files_func="_run_git_test_files_${lang}" source_files_func="_run_git_source_files_${lang}"
 
   mapfile -t modified_files < <("$test_files_func" "${git_args[@]}")
 
@@ -218,22 +204,7 @@ function pull_modified_files() {
   fi
 
   if test "${#modified_files[@]}" -eq 0; then
-    log_stderr "No modified files found"
-    if check_true "${all-}"; then
-      if check_true "${origin-}"; then
-        exit 1
-      fi
-
-      log_stderr "Trying again with origin=true..."
-      export origin=true
-      pull_modified_files
-      return $?
-    fi
-
-    log_stderr "Trying again with all=true..."
-    export all=true
-    pull_modified_files
-    return $?
+    exit_fatal "No modified files found"
   fi
 
   mapfile -d $'\0' -t modified_files < <(printf '%s\0' "${modified_files[@]}" | sort -z)

@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./.common_copy.sh
+source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--all | -a | --no-all] [--base-branch <base_branch>] [--cd-to-git-base-dir] [--no-origin | --origin]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+       ${SYNOP_INDENT} [<passthrough_arg>...]
+
+EXAMPLES
+       ${_SCRIPT_NAME}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --all | -a)
+      all=true
+      shift
+      ;;
+    --base-branch)
+      shift
+      base_branch="$1"
+      shift
+      ;;
+    --cd-to-git-base-dir)
+      cd_to_git_base_dir=true
+      shift
+      ;;
+    --no-all)
+      all=false
+      shift
+      ;;
+    --no-origin)
+      origin=false
+      shift
+      ;;
+    --origin)
+      origin=true
+      shift
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+declare -x modified_files=()
+
+function pull_modified_files() {
+  local git_args=(modified)
+
+  if check_true "${all-}"; then
+    if test -z "${base_branch-}"; then
+      base_branch="$(git default-branch)"
+    fi
+
+    if check_true "${origin-}"; then
+      base_branch="origin/$base_branch"
+    fi
+
+    git_args=(diff-to-branch-files "${base_branch}")
+  fi
+
+  git_args+=("$@")
+
+  mapfile -t modified_files < <(debug_mode=false use_pager=false log_and_run_no_sep git "${git_args[@]}")
+
+  if test "${#modified_files[@]}" -eq 0; then
+    log_stderr "No modified files found"
+    if check_true "${all-}"; then
+      if check_true "${origin-}"; then
+        exit_fatal "No modified files found"
+      fi
+
+      log_stderr "Trying again with origin=true..."
+      export origin=true
+      pull_modified_files "$@"
+      return $?
+    fi
+
+    log_stderr "Trying again with all=true..."
+    export all=true
+    pull_modified_files "$@"
+    return $?
+  fi
+
+  mapfile -d $'\0' -t modified_files < <(printf '%s\0' "${modified_files[@]}" | sort -z)
+}
+
+function main() {
+  cd_to_git_base_dir_if_needed
+
+  if test -z "${all-}" && git is-clean; then
+    all=true
+  fi
+
+  pull_modified_files "$@"
+  join_by_newline_with_end "${modified_files[@]}"
+}
+
+main "${PASSTHROUGH_ARGS[@]}"

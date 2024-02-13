@@ -1,10 +1,255 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./.common_copy.sh
+source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-function main() {
-  git modified "$@" | grep -E 'src/test/.*Test\..{1,5}$'
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--all | -a] [--base-branch <base_branch>] [--lang <lang>] [--no-include-resolved-tests] [--no-origin | --origin]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+       ${SYNOP_INDENT} [<passthrough_arg>...]
+
+EXAMPLES
+       ${_SCRIPT_NAME}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --all | -a)
+      all=true
+      shift
+      ;;
+    --base-branch)
+      shift
+      base_branch="$1"
+      shift
+      ;;
+    --cd-to-git-base-dir)
+      cd_to_git_base_dir=true
+      shift
+      ;;
+    --lang)
+      shift
+      lang="$1"
+      shift
+      ;;
+    --no-include-resolved-tests)
+      no_include_resolved_tests=true
+      shift
+      ;;
+    --no-origin)
+      origin=false
+      shift
+      ;;
+    --origin)
+      origin=true
+      shift
+      ;;
+    --)
+      shift
+      PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+declare -x modified_files=()
+
+function _add_existing_test_files() {
+  local source_file="$1" maybe_tests maybe_test found_test
+  shift
+  maybe_tests=("$@")
+
+  found_test=false
+  for maybe_test in "${maybe_tests[@]}"; do
+    if ! test -e "$maybe_test"; then
+      continue
+    fi
+    found_test=true
+    if is_arg_present "$maybe_test" "${modified_files[@]}"; then
+      log_stderr "Skipping already present modified source file resolved test: $maybe_test"
+    else
+      log_stderr "Adding modified source file resolved test: $maybe_test"
+      modified_files+=("$maybe_test")
+    fi
+  done
+
+  if ! check_true "${found_test-}"; then
+    log_error "Cannot resolve modified source file test [$source_file], checked: ${maybe_tests[*]}"
+  fi
+
+  return 0
 }
 
-main "$@"
+function _run_git_test_files_kotlin() {
+  debug_mode=false use_pager=false log_and_run_no_sep git "$@" -- '*src/test/*Test.*'
+}
+
+function _run_git_source_files_kotlin() {
+  local modified_source_files source_file source_file_name test_file_prefix source_file_ext maybe_tests
+
+  mapfile -t modified_source_files < <(debug_mode=false use_pager=false log_and_run_no_sep git "$@" -- '*src/main/*' | rg 'src/main/(java|kotlin)/.*\.(java|kts?)$')
+
+  for source_file in "${modified_source_files[@]}"; do
+    source_file_name="$(basename "$source_file")"
+    source_file_ext="${source_file_name##*.}"
+    test_file_prefix="$(echo "$source_file" | gsed 's|/main/|/test/|g' | gsed -E 's/\.(.{1,5})$//g')"
+
+    maybe_tests=(
+      "${test_file_prefix}Test.${source_file_ext}"
+      "${test_file_prefix}FunctionalTest.${source_file_ext}"
+      "${test_file_prefix}IntegrationTest.${source_file_ext}"
+      "${test_file_prefix}UnitTest.${source_file_ext}"
+    )
+    _add_existing_test_files "$source_file" "${maybe_tests[@]}"
+  done
+
+  return 0
+}
+
+function _run_git_test_files_ruby() {
+  debug_mode=false use_pager=false log_and_run_no_sep git "$@" -- '*spec*.rb' | rg '.*spec.*\.rb$' | rg -v '.*/(factories|helpers)/.*'
+}
+
+function _run_git_source_files_ruby() {
+  local modified_source_files source_file source_file_engine source_file_context source_file_as_test maybe_tests maybe_test found_test
+
+  mapfile -t modified_source_files < <(debug_mode=false use_pager=false log_and_run_no_sep git "$@" | rg 'engines/.*\.rb$' | rg -v '.*spec.*')
+
+  for source_file in "${modified_source_files[@]}"; do
+    source_file_engine="$(echo "$source_file" | pcregrep -o1 '^engines/(.*?)/')"
+    source_file_context="$(echo "$source_file" | pcregrep -o1 '/([^/]+?_context)/' | head -1)"
+    source_file_as_test="$(echo "$source_file" | pcregrep -o1 '^engines/[^/]+/(.*?)\.rb$')_spec.rb"
+
+    maybe_tests=()
+    if test -n "${source_file_context-}"; then
+      maybe_tests+=("spec/${source_file_engine}/$(echo "${source_file_as_test}" | gsed "s|/public/|/${source_file_context}/|g")")
+    fi
+    maybe_tests+=(
+      "spec/${source_file_engine}/${source_file_as_test}"
+      "spec/unit/${source_file_engine}/${source_file_as_test}"
+      "engines/${source_file_engine}/spec/${source_file_as_test}"
+      "engines/${source_file_engine}/spec/${source_file_engine}/${source_file_as_test}"
+      "engines/${source_file_engine}/spec/${source_file_engine}/integration/${source_file_as_test}"
+    )
+    _add_existing_test_files "$source_file" "${maybe_tests[@]}"
+  done
+
+  return 0
+}
+
+function resolve_lang_if_needed() {
+  local kotlin_count ruby_count
+
+  if test -n "${lang-}"; then
+    return 0
+  fi
+
+  kotlin_count="$(git ls-files -- '*.java' '*.kt' '*.kts' | wc -l)"
+  ruby_count="$(git ls-files -- '*.rb' | wc -l)"
+
+  if test "$ruby_count" -gt "$kotlin_count"; then
+    lang=ruby
+  elif test "$kotlin_count" -gt 0; then
+    lang=kotlin
+  else
+    exit_fatal_with_usage "Cannot resolve lang"
+  fi
+
+  log_stderr "Resolved lang=${lang}"
+}
+
+function pull_modified_files() {
+  local git_args=(modified) test_files_func="_run_git_test_files_${lang}" source_files_func="_run_git_source_files_${lang}" modified_source_files source_file source_file_engine source_file_context source_file_as_test maybe_tests maybe_test
+
+  if check_true "${all-}"; then
+    if test -z "${base_branch-}"; then
+      base_branch="$(git default-branch)"
+    fi
+
+    if check_true "${origin-}"; then
+      base_branch="origin/$base_branch"
+    fi
+
+    git_args=(diff-to-branch-files "${base_branch}")
+  fi
+
+  git_args+=(--diff-filter=d)
+
+  mapfile -t modified_files < <("$test_files_func" "${git_args[@]}")
+
+  if ! check_true "${no_include_resolved_tests-}"; then
+    "$source_files_func" "${git_args[@]}"
+  fi
+
+  if test "${#modified_files[@]}" -eq 0; then
+    log_stderr "No modified files found"
+    if check_true "${all-}"; then
+      if check_true "${origin-}"; then
+        exit 1
+      fi
+
+      log_stderr "Trying again with origin=true..."
+      export origin=true
+      pull_modified_files
+      return $?
+    fi
+
+    log_stderr "Trying again with all=true..."
+    export all=true
+    pull_modified_files
+    return $?
+  fi
+
+  mapfile -d $'\0' -t modified_files < <(printf '%s\0' "${modified_files[@]}" | sort -z)
+  log_with_title_sep_around "MODIFIED FILES" "$(join_by_newline_with_end "${modified_files[@]}")"
+}
+
+function main() {
+  cd_to_git_base_dir_if_needed
+  resolve_lang_if_needed
+
+  if ! check_true "${all-}" && git is-clean; then
+    all=true
+  fi
+
+  pull_modified_files "$@"
+  join_by_newline_with_end "${modified_files[@]}"
+}
+
+main "${PASSTHROUGH_ARGS[@]}"

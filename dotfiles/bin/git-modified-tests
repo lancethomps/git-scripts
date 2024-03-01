@@ -143,7 +143,7 @@ function _run_git_source_files_kotlin() {
 }
 
 function _run_git_test_files_ruby() {
-  debug_mode=false use_pager=false log_and_run_no_sep git modified-with-remote "${git_modified_default_args[@]}" "$@" -- '*spec*.rb' | rg '.*spec.*\.rb$' | rg -v '.*/(factories|helpers)/.*'
+  debug_mode=false use_pager=false log_and_run_no_sep git modified-with-remote "${git_modified_default_args[@]}" "$@" -- '*spec*_spec.rb' | rg -v '.*/(factories|helpers)/.*'
 }
 
 function _run_git_source_files_ruby() {

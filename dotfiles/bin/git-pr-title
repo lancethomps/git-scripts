@@ -27,6 +27,8 @@ def main():
   pr_description = None if args.use_branch else run_git_cmd_stdout("pr-description").strip()
   if pr_description and len(pr_description.splitlines()) == 1:
     output = pr_description
+  elif pr_description and pr_commits_count() == 1:
+    output = pr_description.splitlines()[0]
   else:
     output = run_git_cmd_stdout("current-branch").strip()
 
@@ -34,6 +36,10 @@ def main():
     output = url_encode(output)
 
   print(output)
+
+
+def pr_commits_count() -> int:
+  return int(run_git_cmd_stdout("pr-commits-count").strip())
 
 
 def _parse_args() -> ScriptArgs:

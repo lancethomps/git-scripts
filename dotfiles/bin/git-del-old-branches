@@ -5,34 +5,86 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
-declare -x old_branches
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
 
-function pull_old_branches() {
-  mapfile -t old_branches < <(git old-branches)
+function _usage() {
+  local _SCRIPT_NAME_GIT
+  _SCRIPT_NAME_GIT="${_SCRIPT_NAME/git-/git }"
+
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME_GIT}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME_GIT} [--auto-confirm]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+
+EXAMPLES
+       ${_SCRIPT_NAME_GIT}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --auto-confirm)
+      export auto_confirm=true
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1"
+      _usage
+      exit 1
+      ;;
+  esac
+done
+##################################################################################################################################################
+
+function main() {
+  local old_branches previous_old_branches
+
+  log_verbose_and_run git fetch --prune || true
+  mapfile -t old_branches < <(log_verbose_and_run git old-branches)
+
+  if test "${#old_branches[@]}" -eq 0; then
+    echo "No old branches found"
+    return 0
+  fi
+
+  if ! log_verbose_and_run git branch -d "${old_branches[@]}"; then
+    previous_old_branches=("${old_branches[@]}")
+    mapfile -t old_branches < <(log_verbose_and_run git old-branches)
+    if test "${#old_branches[@]}" -ne 0; then
+      log_with_title_sep "Need to force delete some old branches"
+      join_by_newline_with_end "${old_branches[@]}"
+      log_sep
+      if confirm_with_auto "Force delete above branches?"; then
+        git branch -D "${old_branches[@]}"
+      fi
+    else
+      echo "Error occurred when running git branch -d ${previous_old_branches[*]} that does not appear to be related to needing to force delete branches"
+      return 1
+    fi
+  fi
+
+  return 0
 }
 
-git fetch --prune || true
-pull_old_branches
-
-if test "${#old_branches[@]}" -eq 0; then
-  echo "No old branches found"
-  exit 0
-fi
-
-if ! git branch -d "${old_branches[@]}"; then
-  previous_old_branches=("${old_branches[@]}")
-  pull_old_branches
-  if test "${#old_branches[@]}" -ne 0; then
-    log_with_title_sep "Need to force delete some old branches"
-    join_by_newline_with_end "${old_branches[@]}"
-    log_sep
-    if confirm_with_auto "Force delete above branches?"; then
-      git branch -D "${old_branches[@]}"
-    fi
-  else
-    echo "Error occurred when running git branch -d ${previous_old_branches[*]} that does not appear to be related to needing to force delete branches"
-    exit 1
-  fi
-fi
-
-exit 0
+main

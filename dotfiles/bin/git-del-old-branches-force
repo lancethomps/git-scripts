@@ -3,4 +3,4 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-auto_confirm=true git del-old-branches
+git del-old-branches --auto-confirm "$@"

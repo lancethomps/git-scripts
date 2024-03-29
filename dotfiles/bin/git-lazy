@@ -85,40 +85,43 @@ while test $# -gt 0; do
 done
 ##################################################################################################################################################
 
-if check_true "${cd_to_git_base_dir-}"; then
-  cd "$(git base-dir)"
-fi
-
-if check_true "${args_are_files-}"; then
-  commit_files+=("$@")
-  shift "$#"
-fi
-
-if check_true "${select_files-}"; then
-  mapfile -t commit_files_add < <(git ls-files --others --exclude-standard --modified | fzf --ansi --multi --no-sort --layout "reverse" --header "Select files to commit")
-  commit_files+=("${commit_files_add[@]}")
-fi
-
-if test "${#commit_files[@]}" -eq 0; then
-  commit_files+=(".")
-fi
-
-if test -n "${1-}"; then
-  commit_message="${commit_message-}$*"
-fi
-
-if test -z "${commit_message-}"; then
-  commit_message="$(ask_user_for_input "Please enter a commit message")"
-fi
-
-if check_debug; then
-  echo "commit_files: ${commit_files[*]}"
-  echo "commit_message: ${commit_message}"
-  if ! confirm "Commit and push?"; then
-    exit 0
+function main() {
+  if check_true "${cd_to_git_base_dir-}"; then
+    cd "$(git base-dir)"
   fi
-fi
 
-git add "${commit_files[@]}"
-git commit -m "$commit_message"
-git push-allow-no-remote
+  if check_true "${args_are_files-}"; then
+    commit_files+=("$@")
+    shift "$#"
+  fi
+
+  if check_true "${select_files-}"; then
+    mapfile -t -O "${#commit_files[@]}" commit_files < <(git ls-files --others --exclude-standard --modified | fzf --ansi --multi --no-sort --layout "reverse" --header "Select files to commit")
+  fi
+
+  if test "${#commit_files[@]}" -eq 0; then
+    commit_files+=(".")
+  fi
+
+  if test -n "${1-}"; then
+    commit_message="${commit_message-}$*"
+  fi
+
+  if test -z "${commit_message-}"; then
+    commit_message="$(ask_user_for_input "Please enter a commit message")"
+  fi
+
+  if check_debug; then
+    echo "commit_files: ${commit_files[*]}"
+    echo "commit_message: ${commit_message}"
+    if ! confirm "Commit and push?"; then
+      exit 0
+    fi
+  fi
+
+  git add "${commit_files[@]}"
+  git commit -m "$commit_message"
+  git push-allow-no-remote
+}
+
+main "$@"

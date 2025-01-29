@@ -4,6 +4,7 @@ set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
 git_diff_args=(--no-ext-diff --quiet)
+has_untracked_args=()
 
 ################################################################# FILTERARGS #####################################################################
 PASSTHROUGH_ARGS=()
@@ -14,6 +15,9 @@ while test $# -gt 0; do
       shift
       ;;
     *)
+      if test "$1" == "--"; then
+        has_untracked_args=("$@")
+      fi
       PASSTHROUGH_ARGS+=("$1")
       shift
       ;;
@@ -27,7 +31,7 @@ fi
 
 git_diff_args+=("${PASSTHROUGH_ARGS[@]}")
 
-if git diff "${git_diff_args[@]}" && ! git has-untracked; then
+if git diff "${git_diff_args[@]}" && ! git has-untracked "${has_untracked_args[@]}"; then
   exit 0
 else
   exit 1

@@ -22,6 +22,10 @@ function check_github() {
   test -d ".github/workflows"
 }
 
+function check_kochiku() {
+  test -e "kochiku.yml"
+}
+
 function check_travis() {
   test -e ".travis.yml"
 }
@@ -32,6 +36,8 @@ function main() {
 
   if git_config_type="$(check_git_config)"; then
     ci_type="$git_config_type"
+  elif check_kochiku; then
+    ci_type="${CI_KOCHIKU}"
   elif check_jenkins; then
     ci_type="${CI_JENKINS}"
   elif check_github; then

@@ -2,6 +2,7 @@
 export CI_GITHUB=github
 export CI_JENKINS=jenkins
 export CI_NONE=none
+export CI_KOCHIKU=kochiku
 export CI_TRAVIS=travis
 
 function check_supported_ci_types() {

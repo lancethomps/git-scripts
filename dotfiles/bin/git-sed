@@ -3,7 +3,7 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-declare -x GREP_OPTIONS="" flags='' use_gsed=true git_grep_end_args xargs_args git_grep_config_args=(-c grep.fullname=false -c grep.patterntype=perl -c submodule.recurse=false)
+declare -x GREP_OPTIONS="" flags='' use_gsed=true git_grep_end_args xargs_args do_grep_replacement git_grep_config_args=(-c grep.fullname=false -c grep.patterntype=perl -c submodule.recurse=false)
 
 if command -v git-in-repo >/dev/null 2>&1 && ! git in-repo; then
   echo "Not in a git repo"
@@ -40,7 +40,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [-f | --flags <flags>] [--git-grep-regex <git_grep_regex>] [-ne | --no-exit-status] [--no-print-matches | --print-name-only] [-s | --string-mode] [--use-gsed | --use-sd]
+       ${_SCRIPT_NAME_GIT} [-f | --flags <flags>] [--git-grep-regex <git_grep_regex>] [-ne | --no-exit-status] [--no-grep-replacement] [--no-print-matches | --print-name-only] [-s | --string-mode] [--use-gsed | --use-sd]
        ${SYNOP_INDENT} <search> <replacement> [<git_grep_arg>...]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
@@ -79,6 +79,10 @@ while test $# -gt 0; do
       ;;
     -ne | --no-exit-status)
       no_exit_status=true
+      shift
+      ;;
+    --no-grep-replacement)
+      do_grep_replacement=false
       shift
       ;;
     --no-print-matches)
@@ -130,6 +134,10 @@ function check_verbose() {
   test "${verbose-}" = "true"
 }
 
+function log_sep() {
+  echo '---------------------------------------------------------------------------'
+}
+
 function should_use_gsed() {
   test "${use_gsed-}" = "true"
 }
@@ -170,10 +178,27 @@ function show_updated_lines() {
   # shellcheck disable=SC2155
   local file_and_num file_path line_num purple="$(printf "\033[0;35m")" cyan="$(printf "\033[0;36m")" green="$(printf "\033[0;32m")" clear_color="$(printf "\033[0m")"
 
+  log_sep
+  echo UPDATED
+  log_sep
+
   for file_and_num in "$@"; do
     file_path="$(echo "$file_and_num" | pcregrep -o1 '^(.*?)\:(\d+)$')"
     line_num="$(echo "$file_and_num" | pcregrep -o2 '^(.*?)\:(\d+)$')"
-    gsed "${line_num}q;d" "$file_path" | gsed "s|^|${purple}${file_path}${cyan}:${green}${line_num}${cyan}:${clear_color}|g"
+
+    if test -z "${do_grep_replacement-}"; then
+      if gsed "${line_num}q;d" "$file_path" | grep -q "$replacement"; then
+        do_grep_replacement=true
+      else
+        do_grep_replacement=false
+      fi
+    fi
+
+    if test "${do_grep_replacement-}" = "true"; then
+      gsed "${line_num}q;d" "$file_path" | gsed "s|^|${purple}${file_path}${cyan}:${green}${line_num}${cyan}:${clear_color}|g" | grep --color=always "${replacement}"
+    else
+      gsed "${line_num}q;d" "$file_path" | gsed "s|^|${purple}${file_path}${cyan}:${green}${line_num}${cyan}:${clear_color}|g"
+    fi
   done
 }
 

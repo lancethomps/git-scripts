@@ -100,7 +100,7 @@ function main() {
   fi
 
   if test "${#commit_files[@]}" -eq 0; then
-    commit_files+=(".")
+    commit_files+=(--all)
   fi
 
   if test -n "${1-}"; then

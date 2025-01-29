@@ -3,6 +3,17 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git untracked --directory --no-empty-directory --error-unmatch -- ':/*' >/dev/null 2>&1
+untracked_args=(
+  --directory
+  --no-empty-directory
+  --error-unmatch
+)
+if test "${1-}" = "--"; then
+  untracked_args+=("$@")
+else
+  untracked_args+=(-- ':/*')
+fi
+git untracked "${untracked_args[@]}" >/dev/null 2>&1
+
 #git status --porcelain 2>/dev/null | grep --quiet "^??"
 #git ls-files --others --exclude-standard | grep --quiet '.*'

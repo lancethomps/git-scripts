@@ -5,7 +5,7 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
-DD_BASE='https://app.datadoghq.com/ci/test-runs'
+DD_BASE="${DD_UI_URL:-https://app.datadoghq.com}/ci/test-runs"
 
 function main() {
   local dd_query=() dd_url last_build_json last_build_number

@@ -5,24 +5,73 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
-################################################################# FILTERARGS #####################################################################
+FILES_TYPE=ignored
+DEFAULT_GIT_CLEAN_ARGS=(
+  -Xd
+  --force
+)
+GIT_CLEAN_FILTER=(
+  --exclude='!**/local_settings.py'
+  --exclude='!*.iml'
+  --exclude='!.env'
+  --exclude='!.idea/**'
+  --exclude='!venv'
+  --exclude='!Procfile.*'
+  --exclude='!spec/local_test_spec.rb'
+  --exclude='!config/initializers/local_overrides.rb'
+)
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local _SCRIPT_NAME_GIT
+  _SCRIPT_NAME_GIT="${_SCRIPT_NAME/git-/git }"
+
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME_GIT}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME_GIT} [-all] [--auto-confirm] [--select]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+       ${SYNOP_INDENT} [<passthrough_arg>...]
+
+EXAMPLES
+       ${_SCRIPT_NAME_GIT}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
 PASSTHROUGH_ARGS=()
 while test $# -gt 0; do
   case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
     --all)
       all=true
       shift
       ;;
     --auto-confirm)
-      auto_confirm=true
+      export auto_confirm=true
       shift
       ;;
     --select)
       select=true
-      shift
-      ;;
-    --verbose)
-      verbose=true
       shift
       ;;
     *)
@@ -33,41 +82,40 @@ while test $# -gt 0; do
 done
 ##################################################################################################################################################
 
-git_clean_args=(
-  -Xd
-  --force
-)
+function main() {
+  local git_clean_args files_to_remove remove_files
 
-if test "${all-}" != "true"; then
-  git_clean_args+=(
-    --exclude='!**/local_settings.py'
-    --exclude='!*.iml'
-    --exclude='!.env'
-    --exclude='!.idea/**'
-    --exclude='!venv'
-    --exclude='!Procfile.*'
-    --exclude='!spec/local_test_spec.rb'
-    --exclude='!config/initializers/local_overrides.rb'
-  )
-fi
+  git_clean_args=("${DEFAULT_GIT_CLEAN_ARGS[@]}")
 
-git_clean_args+=("${PASSTHROUGH_ARGS[@]}")
-
-files_to_remove="$(git clean --dry-run "${git_clean_args[@]}")"
-echo "$files_to_remove"
-log_sep
-log_verbose "$(get_args_quoted git clean "${git_clean_args[@]}")"
-
-if test -z "${files_to_remove-}"; then
-  exit 0
-elif check_true "${select-}"; then
-  mapfile -t remove_files < <(git clean --dry-run "${git_clean_args[@]}" | sed -E 's/^Would remove //g' | fzf --layout reverse --multi --ansi --no-sort --bind "ctrl-a:select-all" --header "Select files to remove")
-  if test "${#remove_files[@]}" -eq 0; then
-    exit_fatal "No files selected"
+  if test "${all-}" != "true"; then
+    git_clean_args+=("${GIT_CLEAN_FILTER[@]}")
   fi
-  log_with_title_sep "Removing below files..."
-  join_by_newline_with_end "${remove_files[@]}"
-  rm -rf "${remove_files[@]}"
-elif confirm_with_auto 'Delete above ignored files?'; then
-  git clean "${git_clean_args[@]}"
-fi
+
+  git_clean_args+=("$@")
+
+  files_to_remove="$(git clean --dry-run "${git_clean_args[@]}")"
+  if test -z "${files_to_remove-}"; then
+    log_warn "No ${FILES_TYPE} files to remove"
+    return 0
+  fi
+
+  echo "$files_to_remove"
+  log_sep
+  log_verbose "$(get_args_quoted git clean "${git_clean_args[@]}")"
+
+  if check_true "${select-}"; then
+    mapfile -t remove_files < <(git clean --dry-run "${git_clean_args[@]}" | sed -E 's/^Would remove //g' | fzf --layout reverse --multi --ansi --no-sort --bind "ctrl-a:select-all" --header "Select files to remove")
+    if test "${#remove_files[@]}" -eq 0; then
+      exit_fatal "No files selected"
+    fi
+    log_with_title_sep "Removing below files..."
+    join_by_newline_with_end "${remove_files[@]}"
+    rm -rf "${remove_files[@]}"
+  elif confirm_with_auto "Delete above ${FILES_TYPE} files?"; then
+    git clean "${git_clean_args[@]}"
+  else
+    return 1
+  fi
+}
+
+main "${PASSTHROUGH_ARGS[@]}"

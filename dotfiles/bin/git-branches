@@ -19,7 +19,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--all-branches] [--full] [--mine] [--no-branch-arg] [--remove-dupes] [--simple] [--sort-by <sort_by>] [<for_each_ref_arg>...]
+       ${_SCRIPT_NAME} [--all-branches] [--full] [-m | --mine] [--no-branch-arg] [--remove-dupes] [--simple] [--sort-by <sort_by>] [<for_each_ref_arg>...]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -42,7 +42,7 @@ while test $# -gt 0; do
       full=true
       shift
       ;;
-    --mine)
+    -m | --mine)
       mine=true
       shift
       ;;

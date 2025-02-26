@@ -55,7 +55,7 @@ while test $# -gt 0; do
       ;;
     --mine)
       shift
-      author_filter="$(git config user.name)"
+      author_filter="$(git user-name)"
       ;;
     --)
       shift

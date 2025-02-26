@@ -118,7 +118,7 @@ function get_branches() {
 
 function main() {
   if test "${mine-}" = "true"; then
-    get_branches | grep "$(git config user.name)"
+    get_branches | grep "$(git user-name)"
   else
     get_branches
   fi

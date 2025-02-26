@@ -8,7 +8,7 @@ set -o errexit -o errtrace -o nounset
 
 temp_file="$(mktemp)"
 if test -z "${GITHUB_CREDS-}"; then
-  GITHUB_CREDS="$(git config --get user.name):${GITHUB_TOKEN}"
+  GITHUB_CREDS="$(git user-name):${GITHUB_TOKEN}"
 fi
 
 ################################################################### CLEANUP ######################################################################

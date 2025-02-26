@@ -187,7 +187,7 @@ function show_updated_lines() {
     line_num="$(echo "$file_and_num" | pcregrep -o2 '^(.*?)\:(\d+)$')"
 
     if test -z "${do_grep_replacement-}"; then
-      if gsed "${line_num}q;d" "$file_path" | grep -q "$replacement"; then
+      if gsed "${line_num}q;d" "$file_path" | grep -q "$replacement" >/dev/null 2>&1; then
         do_grep_replacement=true
       else
         do_grep_replacement=false

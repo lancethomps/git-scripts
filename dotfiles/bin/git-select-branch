@@ -77,7 +77,7 @@ function get_refs() {
 }
 
 function get_refs_mine() {
-  get_refs | grep "$(git config user.name)"
+  get_refs | grep "$(git user-name)"
 }
 
 function get_branches() {

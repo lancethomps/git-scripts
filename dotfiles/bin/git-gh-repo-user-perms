@@ -69,7 +69,7 @@ function main() {
   local output
 
   if test -z "${user-}"; then
-    user="$(git config user.name)"
+    user="$(git user-name)"
   fi
 
   if ! output="$(log_verbose_and_run github_curl "https://api.github.com/repos/$(git repo-owner)/$(git repo-name)/collaborators/${user}/permission" "$@")"; then

@@ -6,6 +6,8 @@ source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
+declare -x commit_message commit_files=() args_are_files="${args_are_files:-false}"
+
 ################################################################### USAGE ########################################################################
 _SCRIPT_NAME="$(basename "$0")"
 
@@ -18,7 +20,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--cd-to-git-base-dir] [--files] [--select-files] [--file | -f <file_to_commit>...] [--message | -m <message>] <message_or_files>
+       ${_SCRIPT_NAME} [--cd-to-git-base-dir] [--files] [--select-files] [--file | -f <file_to_commit>...] [--message | -m <message>] [--use-files-for-message-if-missing] <message_or_files>
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -26,9 +28,6 @@ EXAMPLES
 EOF
 }
 ##################################################################################################################################################
-
-args_are_files="${args_are_files:-false}"
-commit_files=()
 
 ################################################################# SCRIPTARGS #####################################################################
 while test $# -gt 0; do
@@ -68,6 +67,10 @@ while test $# -gt 0; do
       args_are_files=true
       shift
       ;;
+    --use-files-for-message-if-missing)
+      use_files_for_message_if_missing=true
+      shift
+      ;;
     --)
       shift
       args_are_files=true
@@ -85,6 +88,10 @@ while test $# -gt 0; do
 done
 ##################################################################################################################################################
 
+function ask_for_commit_message() {
+  commit_message="$(ask_user_for_input "Please enter a commit message")"
+}
+
 function main() {
   if check_true "${cd_to_git_base_dir-}"; then
     cd "$(git base-dir)"
@@ -99,16 +106,25 @@ function main() {
     mapfile -t -O "${#commit_files[@]}" commit_files < <(git ls-files --others --exclude-standard --modified | fzf --ansi --multi --no-sort --layout "reverse" --header "Select files to commit")
   fi
 
-  if test "${#commit_files[@]}" -eq 0; then
-    commit_files+=(--all)
-  fi
-
   if test -n "${1-}"; then
     commit_message="${commit_message-}$*"
   fi
 
   if test -z "${commit_message-}"; then
-    commit_message="$(ask_user_for_input "Please enter a commit message")"
+    if test "${use_files_for_message_if_missing-}" = "true"; then
+      if test "${#commit_files[@]}" -eq 0; then
+        echo "No files for commit message"
+        ask_for_commit_message
+      else
+        commit_message="Update files: $(join_by ' ' "${commit_files[@]}")"
+      fi
+    else
+      ask_for_commit_message
+    fi
+  fi
+
+  if test "${#commit_files[@]}" -eq 0; then
+    commit_files+=(--all)
   fi
 
   if check_debug; then

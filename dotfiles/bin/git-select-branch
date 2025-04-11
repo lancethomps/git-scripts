@@ -66,14 +66,16 @@ done
 
 GIT_CURRENT_BRANCH="$(git current-branch)"
 
+git_branches_args=(--remove-dupes)
 if check_true "${tags-}"; then
-  export BRANCH_ARG='refs/tags/'
+  git_branches_args+=('refs/tags')
 else
-  export BRANCH_ARG='refs/remotes/origin/'
+  git_branches_args+=(--all-branches)
 fi
+git_branches_args+=(--color=always)
 
 function get_refs() {
-  git branches "$BRANCH_ARG" --color=always | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g' | uniq
+  git branches "${git_branches_args[@]}" | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g' | uniq
 }
 
 function get_refs_mine() {

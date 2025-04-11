@@ -3,4 +3,4 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git ls-remote "$@" --exit-code origin >/dev/null 2>&1
+git remote get-url "$@" origin >/dev/null 2>&1

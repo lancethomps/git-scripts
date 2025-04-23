@@ -8,7 +8,7 @@ set -o errexit -o errtrace -o nounset
 
 function check_accessors() {
   if git --no-pager grep-gradle-accessors -q; then
-    echo "Found back Gradle Kotlin DSL accessors imports"
+    log_stderr "Found back Gradle Kotlin DSL accessors imports"
     log_sep
     git --no-pager grep-gradle-accessors
     log_sep
@@ -18,16 +18,20 @@ function check_accessors() {
   return 0
 }
 
-if ! check_accessors; then
-  if confirm_with_auto 'Run git remove-gradle-accessors to remove problematic lines?'; then
-    mapfile -t files_with_accessors < <(git --no-pager grep-gradle-accessors --name-only)
-    log_and_run git remove-gradle-accessors
-    check_accessors
-    log_and_run git add "${files_with_accessors[@]}"
-  else
-    echo "Try running: git remove-gradle-accessors"
-    exit 1
+function main() {
+  if ! check_accessors; then
+    if confirm_with_auto 'Run git remove-gradle-accessors to remove problematic lines?'; then
+      mapfile -t files_with_accessors < <(git --no-pager grep-gradle-accessors --name-only)
+      log_and_run git remove-gradle-accessors
+      check_accessors
+      log_and_run git add "${files_with_accessors[@]}"
+    else
+      log_stderr "Try running: git remove-gradle-accessors"
+      return 1
+    fi
   fi
-fi
 
-exit 0
+  return 0
+}
+
+main "$@"

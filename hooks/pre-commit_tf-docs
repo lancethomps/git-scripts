@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./../dotfiles/bin/.common_copy.sh
+source "${_SCRIPT_DIR}/../dotfiles/bin/.common_copy.sh" || exit 1
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+temp_file="$(mktemp)"
+
+################################################################### CLEANUP ######################################################################
+function cleanup() {
+  local exit_val=$?
+
+  rm "$temp_file" >/dev/null 2>&1 || true
+
+  exit "$exit_val"
+}
+trap cleanup EXIT INT TERM
+##################################################################################################################################################
+
+function main() {
+  local add_files
+    
+  set -o pipefail
+  tf_docs | tee "$temp_file"
+  
+  mapfile -t add_files < <(pcregrep -o1 '^(.*?) updated successfully$' "$temp_file")
+  if test "${#add_files[@]}" -gt 0; then
+    log_and_run_no_sep git add "${add_files[@]}"
+  fi
+
+  return 0
+}
+
+main "$@"

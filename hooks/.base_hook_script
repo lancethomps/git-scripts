@@ -5,20 +5,46 @@
 # It looks for scripts in the .git/hooks/${hook_name}.d directory and executes them in order,
 # passing along stdin. If any script exits with a non-zero status, this script exits.
 
+declare -x hook_scripts=() script_dir hook_name
+
 script_dir="$(dirname "$0")"
 hook_name="$(basename "$0")"
 
 function log_sep() {
-  echo '----------------------------------------------------------------------------------'
+  log_stderr '----------------------------------------------------------------------------------'
+}
+
+function log_stderr() {
+  echo "$@" >&2
+}
+
+function log_verbose() {
+  if test "${verbose-}" = "true"; then
+    log_stderr "$@"
+  fi
+
+  return 0
+}
+
+function add_project_hook_if_available() {
+  local project_hook
+
+  project_hook="$(git rev-parse --show-toplevel)/.hooks/$hook_name"
+  if test -e "${project_hook}"; then
+    hook_scripts+=("${project_hook}")
+  fi
+
+  return 0
 }
 
 hook_dir="$script_dir/$hook_name.d"
-if ! test -e "$hook_dir"; then
-  echo "[ERROR] No hooks found at ${hook_dir}"
-  exit 1
+if test -e "$hook_dir"; then
+  mapfile -d $'\0' -t -O "${#hook_scripts[@]}" hook_scripts < <(find -Ls "$hook_dir" -type f -perm +111 -print0)
+else
+  log_verbose "[ERROR] No hooks found at ${hook_dir}"
 fi
 
-mapfile -d $'\0' -t hook_scripts < <(find -Ls "$hook_dir" -type f -perm +111 -print0)
+#add_project_hook_if_available
 
 if test "${#hook_scripts[@]}" -gt 0; then
   stdin="$(cat /dev/stdin)"
@@ -33,8 +59,8 @@ if test "${#hook_scripts[@]}" -gt 0; then
   fi
 
   for hook in "${hook_scripts[@]}"; do
-    echo
-    echo "Running $hook_name hook at ${hook}"
+    log_stderr
+    log_stderr "Running $hook_name hook at ${hook}"
     log_sep
 
     echo "$stdin" | "$hook" "$@"
@@ -45,7 +71,7 @@ if test "${#hook_scripts[@]}" -gt 0; then
     fi
   done
 else
-  echo "[ERROR] No hooks found at ${hook_dir}"
+  log_stderr "[ERROR] No hooks found at ${hook_dir}"
   exit 1
 fi
 

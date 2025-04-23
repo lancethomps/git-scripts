@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+# shellcheck source=./../dotfiles/bin/.common_copy.sh
+source "${_SCRIPT_DIR}/../dotfiles/bin/.common_copy.sh" || exit 1
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+unresolved_script_dir="$(dirname "$0")"
+blacklist_file="${unresolved_script_dir}/files-blacklist.txt"
+
+if ! test -s "$blacklist_file"; then
+  log_stderr "[WARN] No blacklisted files found at ${blacklist_file}"
+  exit 0
+fi
+
+mapfile -t blacklisted_files <"$blacklist_file"
+mapfile -t added_files < <(git --no-pager diff --name-only --cached HEAD)
+bad_files=()
+for blacklisted_file in "${blacklisted_files[@]}"; do
+  if is_arg_present "$blacklisted_file" "${added_files[@]}"; then
+    bad_files+=("$blacklisted_file")
+  fi
+done
+
+if test "${#bad_files[@]}" -ne 0; then
+  log_warn "The following files are blacklisted and will be removed from the commit: ${bad_files[*]}"
+  log_and_run_no_sep git restore --staged "${bad_files[@]}"
+  mapfile -t added_files < <(git --no-pager diff --name-only --cached HEAD)
+  if test "${#added_files[@]}" -eq 0; then
+    exit_fatal "All files were blacklisted"
+  fi
+fi
+
+exit 0

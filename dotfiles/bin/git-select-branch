@@ -67,6 +67,9 @@ done
 GIT_CURRENT_BRANCH="$(git current-branch)"
 
 git_branches_args=(--remove-dupes)
+if check_true "${mine-}"; then
+  git_branches_args+=(--mine)
+fi
 if check_true "${tags-}"; then
   git_branches_args+=('refs/tags')
 else
@@ -78,20 +81,8 @@ function get_refs() {
   git branches "${git_branches_args[@]}" | grep -Ev "origin/(HEAD|${GIT_CURRENT_BRANCH})$" | sed -E 's/'$'\t''origin\//'$'\t''/g' | uniq
 }
 
-function get_refs_mine() {
-  get_refs | grep "$(git user-name)"
-}
-
-function get_branches() {
-  if test "${mine-}" = "true"; then
-    get_refs_mine
-  else
-    get_refs
-  fi
-}
-
 function main() {
-  get_branches | fzf --ansi --no-sort --layout "reverse" --header "Current branch: ${GIT_CURRENT_BRANCH}" | pcregrep -o1 '\t([^\t]+)$'
+  get_refs | fzf --ansi --no-sort --layout "reverse" --header "Current branch: ${GIT_CURRENT_BRANCH}" | pcregrep -o1 '\t([^\t]+)$'
 }
 
 main

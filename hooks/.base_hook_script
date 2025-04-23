@@ -26,6 +26,7 @@ function log_verbose() {
   return 0
 }
 
+# shellcheck disable=SC2317
 function add_project_hook_if_available() {
   local project_hook
 

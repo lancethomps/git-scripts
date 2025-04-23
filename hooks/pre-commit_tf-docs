@@ -21,10 +21,10 @@ trap cleanup EXIT INT TERM
 
 function main() {
   local add_files
-    
+
   set -o pipefail
   tf_docs | tee "$temp_file"
-  
+
   mapfile -t add_files < <(pcregrep -o1 '^(.*?) updated successfully$' "$temp_file")
   if test "${#add_files[@]}" -gt 0; then
     log_and_run_no_sep git add "${add_files[@]}"

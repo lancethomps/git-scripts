@@ -3,4 +3,4 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git push --set-upstream origin "$(git current-branch)"
+git push --set-upstream origin "$(git current-branch)" "$@"

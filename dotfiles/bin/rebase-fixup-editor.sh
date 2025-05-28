@@ -3,4 +3,9 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git -c "sequence.editor=rebase-fixup-editor.sh" rebase-side-branch-commits "$@"
+function main() {
+  gsed -E -i '2,$s/^p(ick)? /f /' "$@"
+  vim "$@"
+}
+
+main "$@"

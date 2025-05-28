@@ -17,7 +17,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--major | -ma | --minor | -mi | --patch | -p | --version <version>] [--auto-confirm | -ac] [--use-current-branch]
+       ${_SCRIPT_NAME} [--major | -ma | --minor | -mi | --patch | -p | --version <version>] [--auto-confirm | -ac] [--draft | -d | --no-draft] [--use-current-branch]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -43,6 +43,14 @@ while test $# -gt 0; do
       ;;
     --auto-confirm | -ac)
       export auto_confirm=true
+      shift
+      ;;
+    --draft | -d)
+      draft=true
+      shift
+      ;;
+    --no-draft)
+      draft=false
       shift
       ;;
     --major | -ma)
@@ -108,6 +116,13 @@ function get_next_tag() {
   return 0
 }
 
+function handle_draft() {
+  log_and_run gh release view "v${next_tag}"
+  if confirm_with_auto "Publish draft release?"; then
+    log_and_run gh release edit "v${next_tag}" --draft=false
+  fi
+}
+
 function main() {
   local gh_args
 
@@ -123,8 +138,17 @@ function main() {
     gh_args+=(--target "$(git current-branch)")
   fi
 
+  if check_true "${draft-}"; then
+    gh_args+=(--draft)
+  fi
+
   if confirm_with_auto "Release tag version (${last_tag} -> ${next_tag}) via 'gh ${gh_args[*]}'?"; then
-    gh "${gh_args[@]}"
+    log_and_run gh "${gh_args[@]}"
+
+    if check_true "${draft-}"; then
+      handle_draft
+    fi
+
     git fetch
   fi
 }

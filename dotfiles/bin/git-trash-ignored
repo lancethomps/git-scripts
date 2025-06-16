@@ -13,7 +13,7 @@ while test $# -gt 0; do
       all=true
       shift
       ;;
-    --auto-confirm)
+    --auto-confirm | -ac)
       auto_confirm=true
       shift
       ;;

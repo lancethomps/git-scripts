@@ -9,7 +9,7 @@ source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
 PASSTHROUGH_ARGS=()
 while test $# -gt 0; do
   case "$1" in
-    --auto-confirm)
+    --auto-confirm | -ac)
       export auto_confirm=true
       shift
       ;;

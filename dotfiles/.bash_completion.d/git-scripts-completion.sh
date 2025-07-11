@@ -78,6 +78,9 @@ _create_wrapped_git_completion grep \
   grep-fzf \
   grep-idea
 
+_create_wrapped_git_completion log \
+  side-branch-commits
+
 _create_wrapped_git_completion ls-files \
   ignored \
   ls-files-all \

@@ -9,6 +9,8 @@ if test -z "${_GREP_ARGS-}"; then
   _GREP_ARGS=()
 fi
 
+declare -x open_grepped_lines_args=()
+
 ################################################################### USAGE ########################################################################
 _SCRIPT_NAME="$(basename "$0")"
 _SCRIPT_NAME_GIT="${_SCRIPT_NAME/git-/git }"
@@ -116,7 +118,6 @@ function create_open_grepped_lines_args() {
     --select-header "use right arrow to open in idea | git grep ${_GREP_ARGS[*]}"
     --select-preview-file-cmd "$(create_preview_file_cmd "$@")"
   )
-  export open_grepped_lines_args
 }
 
 function get_output() {
@@ -151,16 +152,16 @@ _GREP_ARGS=(
   "${_GREP_ARGS[@]}"
 )
 
+create_open_grepped_lines_args "$@"
+
 if check_debug; then
-  create_open_grepped_lines_args "$@"
   echo "_GREP_ARGS:              ${_GREP_ARGS[*]}"
   echo "open_grepped_lines_args: ${open_grepped_lines_args[*]}"
   exit 0
 fi
 
 if command -v open_grepped_lines >/dev/null 2>&1; then
-  create_open_grepped_lines_args "$@"
   get_output "$@" | open_grepped_lines "${open_grepped_lines_args[@]}" -
 else
-  get_output "$@" "${_GREP_ARGS[@]}"
+  get_output "$@"
 fi

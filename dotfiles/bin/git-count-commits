@@ -7,13 +7,7 @@ from typing import Dict, List, Optional
 
 from ltpylib import procs
 from ltpylib.common_types import TypeWithDictRepr
-from ltpylib.opts import (
-  BaseArgs,
-  create_default_with_positionals_arg_parser,
-  OutputFormatArgs,
-  PagerArgs,
-  parse_args_with_positionals_and_init_others,
-)
+from ltpylib.opts import (BaseArgs, OutputFormatArgs, PagerArgs, create_default_with_positionals_arg_parser, parse_args_with_positionals_and_init_others)
 from ltpylib.output import dicts_to_markdown_table, prettify_json_auto_color, prettify_yaml
 
 
@@ -147,7 +141,7 @@ def call_git_shortlog(args: ScriptArgs) -> List[str]:
   if args.git_cmd_args:
     git_cmd.extend(args.git_cmd_args)
 
-  return procs.run_and_parse_output(git_cmd, check=True, stderr=sys.stderr)[1].splitlines()
+  return procs.run_and_parse_output(git_cmd, check=True, stderr=sys.stderr, log_cmd=True)[1].splitlines()
 
 
 def _parse_args() -> ScriptArgs:

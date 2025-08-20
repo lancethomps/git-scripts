@@ -3,9 +3,10 @@
 import argparse
 import re
 import sys
+from decimal import Decimal
 from typing import Dict, List, Optional
 
-from ltpylib import procs
+from ltpylib import numbers_util, procs
 from ltpylib.common_types import TypeWithDictRepr
 from ltpylib.opts import (BaseArgs, OutputFormatArgs, PagerArgs, create_default_with_positionals_arg_parser, parse_args_with_positionals_and_init_others)
 from ltpylib.output import dicts_to_markdown_table, prettify_json_auto_color, prettify_yaml
@@ -21,6 +22,7 @@ class GitCommitCountLine(TypeWithDictRepr):
       raise ValueError(f"bad line: {line}")
 
     self.commit_count: int = int(match.group(1))
+    self.pct: Decimal = None
     self.user_name: str = match.group(2).strip()
     self.user_email: Optional[str] = match.group(3)
 
@@ -89,9 +91,11 @@ def main():
       by_email[parsed.user_email] = combined
 
   counts.sort(key=lambda x: x.commit_count, reverse=True)
+  total_count = float(sum([c.commit_count for c in counts]))
   for count in counts:
     count.all_user_names.sort()
     count.all_user_emails.sort()
+    count.pct = numbers_util.convert_decimal_precision((count.commit_count / total_count) * 100, 1)
 
   if args.json:
     result = prettify_json_auto_color(counts)

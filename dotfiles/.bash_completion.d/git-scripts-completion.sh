@@ -94,6 +94,10 @@ _create_wrapped_git_completion ls-remote \
 _create_wrapped_git_completion merge \
   fork-merge-upstream
 
+_create_wrapped_git_completion push \
+  push-allow-no-remote \
+  push-branch
+
 _create_wrapped_git_completion rebase \
   fork-rebase-upstream \
   rebase-side-branch-commits

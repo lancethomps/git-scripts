@@ -6,6 +6,68 @@ source "${_SCRIPT_DIR}/.common_copy.sh" || exit 1
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
+declare -x to_ref="${PR_TO_REF-}"
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  local _SCRIPT_NAME_GIT
+  _SCRIPT_NAME_GIT="${_SCRIPT_NAME/git-/git }"
+
+  local SYNOP_INDENT
+  SYNOP_INDENT="$(head -c "$(echo -n "${_SCRIPT_NAME_GIT}" | wc -c)" </dev/zero | tr '\0' " ")"
+
+  cat <<EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME_GIT} [--to-ref <to_ref>]
+       ${SYNOP_INDENT} [--help] [--debug] [--verbose]
+       ${SYNOP_INDENT} [<passthrough_arg>...]
+
+EXAMPLES
+       ${_SCRIPT_NAME_GIT}
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+PASSTHROUGH_ARGS=()
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      export debug_mode=true
+      shift
+      ;;
+    --verbose)
+      export verbose=true
+      shift
+      ;;
+    --to-ref)
+      shift
+      to_ref="$1"
+      shift
+      ;;
+    --)
+      shift
+      PASSTHROUGH_ARGS+=("$@")
+      shift "$#"
+      break
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+##################################################################################################################################################
+
 function has_format_arg() {
   local val
 
@@ -21,37 +83,43 @@ function has_format_arg() {
   return 1
 }
 
-if test -z "${PR_TO_REF-}"; then
-  if test -n "${1-}" && [[ $1 != '-'* ]]; then
-    PR_TO_REF="$1"
-    shift
-  else
-    PR_TO_REF="origin/$(git default-branch)"
+function main() {
+  local git_current_branch git_log_args
+
+  if test -z "${to_ref-}"; then
+    if test -n "${1-}" && [[ $1 != '-'* ]]; then
+      to_ref="$1"
+      shift
+    else
+      to_ref="origin/$(git default-branch)"
+    fi
   fi
-fi
 
-git_current_branch="$(git current-branch)"
+  git_current_branch="$(git current-branch)"
 
-git_log_args=(
-  --left-right
-  --cherry-pick
-  --no-merges
-  --reverse
-  --date=iso
-)
-
-if ! has_format_arg "$@"; then
-  git_log_args+=(
-    --stat
-    --pretty='format:%C(yellow)%h %C(cyan)%>(12)%ad %Cgreen%<(10)%aN%Cred%d %Creset%B'
+  git_log_args=(
+    --left-right
+    --cherry-pick
+    --no-merges
+    --reverse
+    --date=iso
   )
-fi
 
-git_log_args+=(
-  "$@"
-  "${git_current_branch}"
-  "^${PR_TO_REF}"
-  --
-)
+  if ! has_format_arg "$@"; then
+    git_log_args+=(
+      --stat
+      --pretty='format:%C(yellow)%h %C(cyan)%>(12)%ad %Cgreen%<(10)%aN%Cred%d %Creset%B'
+    )
+  fi
 
-log_verbose_and_run git log "${git_log_args[@]}"
+  git_log_args+=(
+    "$@"
+    "${git_current_branch}"
+    "^${to_ref}"
+    --
+  )
+
+  log_verbose_and_run git log "${git_log_args[@]}"
+}
+
+main "${PASSTHROUGH_ARGS[@]}"

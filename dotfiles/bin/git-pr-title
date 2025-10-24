@@ -3,6 +3,7 @@
 
 import argparse
 import os
+from typing import List
 
 from ltpylib import gitrepos, opts, opts_actions
 from ltpylib.strconverters import url_encode
@@ -18,15 +19,19 @@ class ScriptArgs(opts.BaseArgs):
     self.urlencode: bool = args.urlencode
 
     if not self.to_ref:
-      self.to_ref = gitrepos.default_branch()
+      self.to_ref = "origin/" + gitrepos.default_branch()
+    elif not self.to_ref.startswith("origin/"):
+      self.to_ref = "origin/" + self.to_ref
+
+    self.git_pr_cmd_args: List[str] = ["--to-ref", self.to_ref]
 
 
 def main():
   args = _parse_args()
-  pr_description = None if args.use_branch else gitrepos.run_git_cmd_stdout("pr-description")
+  pr_description = None if args.use_branch else gitrepos.pr_description(add_args=args.git_pr_cmd_args)
   if pr_description and len(pr_description.splitlines()) == 1:
     output = pr_description
-  elif pr_description and pr_commits_count() == 1:
+  elif pr_description and gitrepos.pr_commits_count(add_args=args.git_pr_cmd_args) == 1:
     output = pr_description.splitlines()[0]
   else:
     output = gitrepos.current_branch()
@@ -35,10 +40,6 @@ def main():
     output = url_encode(output)
 
   print(output)
-
-
-def pr_commits_count() -> int:
-  return int(gitrepos.run_git_cmd_stdout("pr-commits-count"))
 
 
 def _parse_args() -> ScriptArgs:

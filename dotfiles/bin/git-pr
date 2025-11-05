@@ -20,7 +20,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [--no-body] [--no-open] [--simple] [--to-ref <to_ref>] [--title | -t <title]
+       ${_SCRIPT_NAME_GIT} [--body | -b <body>] [--no-body] [--no-open] [--simple] [--to-ref <to_ref>] [--title | -t <title>]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -42,6 +42,11 @@ while test $# -gt 0; do
       ;;
     --verbose)
       export verbose=true
+      shift
+      ;;
+    --body | -b)
+      shift
+      body="$1"
       shift
       ;;
     --no-body)
@@ -110,7 +115,9 @@ function github_url() {
   query_params+=("title=$(url_encode_py "$title")")
 
   if ! check_true "${no_body-}"; then
-    if command -v git-pr-description-custom >/dev/null 2>&1; then
+    if test -n "${body-}"; then
+      query_params+=("body=$(url_encode_py "$body")")
+    elif command -v git-pr-description-custom >/dev/null 2>&1; then
       query_params+=("body=$(git pr-description-custom --to-ref "${PR_TO_REF}" --urlencode)")
     else
       query_params+=("body=$(url_encode_py "$(git pr-description --to-ref "${PR_TO_REF}")")")

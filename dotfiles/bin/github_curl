@@ -44,22 +44,26 @@ function try_curl_with_rate_limit_handling() {
   json_output="${curl_output#*$'\r\n\r\n'}"
 
   if test "${http_code-}" -eq 403; then
-    local debug_file_headers debug_file_json reset_time
+    local debug_file_headers debug_file_json reset_time remaining
 
     debug_file_headers="${DOCS_DIR}/github_rate_limit_headers.txt"
     debug_file_json="${DOCS_DIR}/github_rate_limit_response.json"
     echo "$headers_output" >"$debug_file_headers"
     echo "$json_output" >"$debug_file_json"
 
-    reset_time="$(pcregrep -o1 '^x\-ratelimit\-reset\: (.*?)$' "$debug_file_headers")"
-    if command -v epoch_converter >/dev/null 2>&1; then
-      reset_time="$(epoch_converter --iso "$reset_time")"
-    fi
+    remaining="$(pcregrep -o1 '^x\-ratelimit\-remaining\: (.*?)$' "$debug_file_headers")"
 
-    log_stderr "$(TZ=UTC gdate '+%Y-%m-%dT%H:%M:%S.%3NZ') Rate limited, will retry shortly. Output at ${debug_file_headers} and ${debug_file_json}. x-ratelimit-reset: ${reset_time}"
-    sleep 30
-    try_curl_with_rate_limit_handling
-    return $?
+    if ! test "$remaining" -gt 0; then
+      reset_time="$(pcregrep -o1 '^x\-ratelimit\-reset\: (.*?)$' "$debug_file_headers")"
+      if command -v epoch_converter >/dev/null 2>&1; then
+        reset_time="$(epoch_converter --iso "$reset_time")"
+      fi
+
+      log_stderr "$(TZ=UTC gdate '+%Y-%m-%dT%H:%M:%S.%3NZ') Rate limited, will retry shortly. Output at ${debug_file_headers} and ${debug_file_json}. x-ratelimit-reset: ${reset_time}"
+      sleep 30
+      try_curl_with_rate_limit_handling
+      return $?
+    fi
   fi
 
   if test "${http_code-}" -eq 200; then

@@ -5,6 +5,8 @@ if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while
 source "${_SCRIPT_DIR}/.command_defaults.sh" || exit 1
 ##################################################################################################################################################
 
+declare -x browse_url_root git_current_branch git_default_branch git_current_branch_url git_repo_root git_path git_line
+
 ################################################################### USAGE ########################################################################
 _SCRIPT_NAME="$(basename "$0")"
 
@@ -122,6 +124,8 @@ function bitbucket_url() {
 }
 
 function main() {
+  local git_url git_cwd scm_domain browse_url
+
   browse_url_root="$(git ui-url-root "$@")"
 
   if test -n "${1-}" && ! git in-repo; then

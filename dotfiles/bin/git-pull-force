@@ -27,5 +27,5 @@ if ! git has-incoming-commits || ! git has-outgoing-commits; then
   fi
 fi
 
-git revert-local-changes-and-commits
-git pull
+log_and_run git revert-local-changes-and-commits
+log_and_run git pull

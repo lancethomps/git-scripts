@@ -3,4 +3,4 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git branch -vv "$@" | grep ': gone]' | awk '{print $1}'
+git branch -vv "$@" | grep -Ev '^\+' | grep ': gone]' | awk '{print $1}'

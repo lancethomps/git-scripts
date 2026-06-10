@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+################################################################### SETUP ########################################################################
+set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+function main() {
+  local _git_dir _git_common_dir
+
+  if ! _git_dir="$(git rev-parse --git-dir)"; then
+    return 1
+  fi
+  if ! _git_common_dir="$(git rev-parse --git-common-dir)"; then
+    return 1
+  fi
+
+  test "$_git_dir" != "$_git_common_dir"
+}
+
+main "$@"

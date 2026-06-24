@@ -20,7 +20,9 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--cd-to-git-base-dir] [--files] [--select-files] [--file | -f <file_to_commit>...] [--message | -m <message>] [--use-files-for-message-if-missing] <message_or_files>
+       ${_SCRIPT_NAME} [--cd-to-git-base-dir] [--files] [--select-files] [--use-files-for-message-if-missing]
+       ${_SCRIPT_NAME} [--file | -f <file_to_commit>...] [--message | -m <message>] [--validate-files-less-than <validate_files_less_than>]
+       ${_SCRIPT_NAME} <message_or_files>
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -71,6 +73,11 @@ while test $# -gt 0; do
       use_files_for_message_if_missing=true
       shift
       ;;
+    --validate-files-less-than)
+      shift
+      validate_files_less_than="$1"
+      shift
+      ;;
     --)
       shift
       args_are_files=true
@@ -90,6 +97,24 @@ done
 
 function ask_for_commit_message() {
   commit_message="$(ask_user_for_input "Please enter a commit message")"
+}
+
+function check_validate_files_less_than() {
+  local staged_files_count
+
+  if test -z "${validate_files_less_than-}"; then
+    return 0
+  fi
+
+  if ! staged_files_count="$(git diff --cached --numstat | wc -l)"; then
+    exit_fatal "Could not get staged files count"
+  fi
+
+  if test "${staged_files_count}" -gt "${validate_files_less_than}"; then
+    exit_fatal "The count of staged files exceeds the max specified by --validate-files-less-than: ${staged_files_count} > ${validate_files_less_than}"
+  fi
+
+  return 0
 }
 
 function main() {
@@ -136,6 +161,7 @@ function main() {
   fi
 
   git add "${commit_files[@]}"
+  check_validate_files_less_than
   git commit -m "$commit_message"
   git push-allow-no-remote
 }

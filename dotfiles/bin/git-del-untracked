@@ -27,7 +27,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME_GIT} [-all] [--auto-confirm] [--select]
+       ${_SCRIPT_NAME_GIT} [-all] [--auto-confirm | -ac] [--select]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
        ${SYNOP_INDENT} [<passthrough_arg>...]
 

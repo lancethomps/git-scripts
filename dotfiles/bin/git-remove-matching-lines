@@ -18,7 +18,7 @@ NAME
        ${_SCRIPT_NAME}
 
 SYNOPSIS
-       ${_SCRIPT_NAME} [--auto-confirm] [-ne | --no-exit-status] <pattern> [<git_grep_arg>..]
+       ${_SCRIPT_NAME} [--auto-confirm | -ac] [--no-exit-status | -ne] <pattern> [<git_grep_arg>..]
        ${SYNOP_INDENT} [--help] [--debug] [--verbose]
 
 EXAMPLES
@@ -47,7 +47,7 @@ while test $# -gt 0; do
       export auto_confirm=true
       shift
       ;;
-    -ne | --no-exit-status)
+    --no-exit-status | -ne)
       no_exit_status=true
       shift
       ;;

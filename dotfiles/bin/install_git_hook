@@ -84,6 +84,20 @@ if test -z "${1-}"; then
 fi
 ##################################################################################################################################################
 
+function find_first_existing_file() {
+  local file
+
+  for file in "$@"; do
+    if test -e "$file"; then
+      echo "$file"
+      return 0
+    fi
+  done
+
+  log_stderr "no existing files found for: $*"
+  return 1
+}
+
 function install_base_hook_script() {
   local hook_type install_to_file
   hook_type="$1"
@@ -126,8 +140,12 @@ function install_base_hook_script() {
 
 function install_hook() {
   local hook_name hook_file hook_type install_to_dir install_to_file
-  hook_name="$1"
-  hook_file="${HOOKS_DIR}/${hook_name}"
+
+  if ! hook_file="$(find_first_existing_file "$1" "${HOOKS_DIR}/$1")"; then
+    exit_fatal_with_usage "could not find hook file for: $1"
+  fi
+
+  hook_name="$(basename "$hook_file")"
   hook_type="${hook_name%_*}"
   install_base_hook_script "$hook_type"
   install_to_dir="${INSTALL_TO_HOOKS_DIR}/${hook_type}.d"

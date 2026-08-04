@@ -45,7 +45,7 @@ fi
 git_diff_args+=("${END_ARGS[@]}")
 
 if check_debug; then
-  echo git diff "${git_diff_args[@]}"
+  get_args_quoted git diff "${git_diff_args[@]}"
 else
-  git diff "${git_diff_args[@]}"
+  log_verbose_and_run git diff "${git_diff_args[@]}"
 fi

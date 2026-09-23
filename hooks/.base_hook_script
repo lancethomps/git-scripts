@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 #GIT_SCRIPTS_BASE_HOOK_SCRIPT
 
 # This script should be saved in a git repo as a hook file, e.g. .git/hooks/pre-receive.
@@ -40,9 +40,11 @@ function add_project_hook_if_available() {
 
 hook_dir="$script_dir/$hook_name.d"
 if test -e "$hook_dir"; then
-  mapfile -d $'\0' -t -O "${#hook_scripts[@]}" hook_scripts < <(find -Ls "$hook_dir" -type f -perm +111 -print0)
+  if ! mapfile -d $'\0' -t -O "${#hook_scripts[@]}" hook_scripts < <(find -Ls "$hook_dir" -type f -perm +111 -print0); then
+    env | sort
+  fi
 else
-  log_verbose "[ERROR] No hooks found at ${hook_dir}"
+  log_verbose "[ERROR] No hooks found at ${hook_dir}, because the directory does not exist"
 fi
 
 #add_project_hook_if_available
@@ -72,7 +74,7 @@ if test "${#hook_scripts[@]}" -gt 0; then
     fi
   done
 else
-  log_stderr "[ERROR] No hooks found at ${hook_dir}"
+  log_stderr "[ERROR] No hooks found at ${hook_dir}, but there should have been some available"
   exit 1
 fi
 

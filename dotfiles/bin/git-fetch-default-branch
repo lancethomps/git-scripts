@@ -3,4 +3,13 @@
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git fetch-branch-origin "$(git default-branch)" "$@"
+if ! git fetch-branch-origin "$(git default-branch)" "$@"; then
+  if git in-worktree && git -C "$(git worktree-main-dir)" is-default-branch; then
+    git -C "$(git worktree-main-dir)" pull
+    exit "$?"
+  else
+    exit 1
+  fi
+fi
+
+exit 0
